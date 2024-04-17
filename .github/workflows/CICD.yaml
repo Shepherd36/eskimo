@@ -373,6 +373,7 @@ jobs:
       nextTag: ${{ steps.check_tag.outputs.next_tag }}
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - name: Checkout
         uses: actions/checkout@v3

@@ -95,8 +95,9 @@ build: build-all@ci/cd
 
 binary-specific-service:
 	set -xe; \
-	echo "$@: $(SERVICE_NAME) / $(GOARCH)" ; \
+	echo "$@: $(SERVICE_NAME) / $(GOOS) / $(GOARCH)" ; \
 	go build -tags=go_json -a -v -o ./cmd/$${SERVICE_NAME}/bin ./cmd/$${SERVICE_NAME}; \
+	cp ./cmd/$${SERVICE_NAME}/bin ./$${SERVICE_NAME}.$${GOOS}.$${GOARCH}.bin; \
 
 test:
 	set -xe; \
@@ -163,6 +164,7 @@ clean:
 	@test -d cmd && find ./cmd -mindepth 2 -maxdepth 2 -type f -name bin -exec rm -f {} \; || true;
 	@test -d cmd && find ./cmd -mindepth 2 -maxdepth 2 -type d -name bins -exec rm -Rf {} \; || true;
 	@find . -name ".tmp-*" -exec rm -Rf {} \; || true;
+	@find . -maxdepth 1 -name "*.bin" -exec rm -Rf {} \; || true;
 	@find . -mindepth 1 -maxdepth 3 -type f -name $(COVERAGE_FILE) -exec rm -Rf {} \; || true;
 	@find . -mindepth 1 -maxdepth 3 -type f -name tmp$(COVERAGE_FILE) -exec rm -Rf {} \; || true;
 
@@ -198,6 +200,12 @@ else
 		echo "  $${target}"; \
 	done; false;
 endif
+
+buildAllBinaries:
+	set -xe; \
+	find ./cmd -mindepth 1 -maxdepth 1 -type d -print | grep -v 'fixture' | grep -v 'scripts' | while read service; do \
+			env SERVICE_NAME=$${service##*/} env GOOS=$(GOOS) env GOARCH=$(GOARCH) $(MAKE) dockerfile; \
+		done;
 
 # note: it requires make-4.3+ to run that
 buildMultiPlatformDockerImage:

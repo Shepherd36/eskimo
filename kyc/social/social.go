@@ -281,7 +281,7 @@ func (r *repository) modifyUser(ctx context.Context, success, skip bool, kycStep
 		} else {
 			(*usr.KYCStepsLastUpdatedAt)[int(kycStep)-1] = now
 		}
-		if kycStep == users.Social1KYCStep {
+		if kycStep == users.Social1KYCStep && !skip {
 			nextStep := kycStep + 1
 			usr.KYCStepPassed = &nextStep
 			if len(*usr.KYCStepsLastUpdatedAt) < int(nextStep) {

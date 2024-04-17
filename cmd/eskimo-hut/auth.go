@@ -343,7 +343,7 @@ func (s *service) updateMetadataWithFirebaseID(
 	mdFields *users.JSON,
 	userID string,
 ) (md string, err error) {
-	fields := mdFields //nolint:ifshort // .
+	fields := mdFields
 	if fields == nil {
 		empty := users.JSON(map[string]any{})
 		fields = &empty

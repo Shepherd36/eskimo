@@ -397,7 +397,7 @@ func (r *repository) GetReferralAcquisitionHistory(ctx context.Context, userID s
 	result := make([]*ReferralAcquisition, maxDaysReferralsHistory) //nolint:makezero // We're know size for sure.
 	orderOfDaysT1 := []int64{res.T1Today, res.T1TodayMinus1, res.T1TodayMinus2, res.T1TodayMinus3, res.T1TodayMinus4}
 	orderOfDaysT2 := []int64{res.T2Today, res.T2TodayMinus1, res.T2TodayMinus2, res.T2TodayMinus3, res.T2TodayMinus4}
-	for ind := 0; ind < elapsedDaysSinceLastRefCountsUpdate; ind++ {
+	for ind := range elapsedDaysSinceLastRefCountsUpdate {
 		var date *time.Time
 		if ind != 0 {
 			date = time.New(now.AddDate(0, 0, -ind))

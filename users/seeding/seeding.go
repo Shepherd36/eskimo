@@ -32,10 +32,10 @@ func StartSeeding() {
 	}()
 
 	for _, usr := range findRealUsers(db) {
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 100; i++ { //nolint:intrange // Not to have unused var.
 			t1 := createReferral(db, usr.UserID)
 			makeReferralAPhoneAgendaContact(db, t1, usr.UserID)
-			for j := 0; j < 100; j++ {
+			for j := 0; j < 100; j++ { //nolint:intrange // Not to have unused var.
 				makeReferralAPhoneAgendaContact(db, createReferral(db, t1), usr.UserID)
 			}
 		}
@@ -63,7 +63,7 @@ func createGlobalStats(db tarantool.Connector) {
 		globalKeys[fmt.Sprintf("TOTAL_ACTIVE_USERS_%v", pastHour.Format("2006-01-02"))] = rand.Intn(maxCount)
 		globalKeys[fmt.Sprintf("TOTAL_USERS_%v", pastHour.Format("2006-01-02"))] = rand.Intn(maxCount)
 	}
-	for i := 0; i < totalHours/2; i++ {
+	for i := range totalHours / 2 {
 		futureHour := stdlibtime.Unix(0, nowNanos).Add(stdlibtime.Duration(i) * stdlibtime.Hour)
 		globalKeys[fmt.Sprintf("TOTAL_ACTIVE_USERS_%v", futureHour.Format("2006-01-02:15"))] = rand.Intn(maxCount)
 		globalKeys[fmt.Sprintf("TOTAL_USERS_%v", futureHour.Format("2006-01-02:15"))] = rand.Intn(maxCount)
@@ -73,7 +73,7 @@ func createGlobalStats(db tarantool.Connector) {
 
 	for key, val := range globalKeys {
 		log.Panic(db.UpsertTyped("GLOBAL", &struct {
-			_msgpack struct{} `msgpack:",asArray"` //nolint:revive,tagliatelle,nosnakecase // To insert we need asArray
+			_msgpack struct{} `msgpack:",asArray"` //nolint:revive,tagliatelle // To insert we need asArray
 			Key      string
 			Value    uint64
 		}{
@@ -84,7 +84,7 @@ func createGlobalStats(db tarantool.Connector) {
 			Field: 1,
 			Arg:   uint64(val),
 		}}, &[]*struct {
-			_msgpack struct{} `msgpack:",asArray"` //nolint:revive,tagliatelle,nosnakecase // To insert we need asArray
+			_msgpack struct{} `msgpack:",asArray"` //nolint:revive,tagliatelle // To insert we need asArray
 			Key      string
 			Value    uint64
 		}{}))

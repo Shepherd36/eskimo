@@ -139,14 +139,16 @@ func (r *repository) getGlobalValues(ctx context.Context, keys ...string) ([]*Gl
 }
 
 func (r *repository) updateTotalUsersCount(ctx context.Context, usr *UserSnapshot) error {
-	if isFirstMiningAfterHumanVerification := (usr.Before == nil || usr.Before.ID == "") && usr.User != nil && usr.User.ID != "" &&
-		usr.User.isFirstMiningAfterHumanVerification(r); isFirstMiningAfterHumanVerification {
-		return r.incrementOrDecrementTotalUsers(ctx, time.Now(), true)
+	if (usr.Before == nil || usr.Before.ID == "") && usr.User != nil && usr.User.ID != "" {
+		if true || usr.User.isFirstMiningAfterHumanVerification(r) { //nolint:revive // .
+			return r.incrementOrDecrementTotalUsers(ctx, time.Now(), true)
+		}
 	}
 
-	if isDeleteAfterHumanVerification := (usr.User == nil || usr.User.ID == "") && usr.Before != nil && usr.Before.ID != "" &&
-		usr.Before.hadAtLeastAMiningAfterHumanVerification(r); isDeleteAfterHumanVerification {
-		return r.incrementOrDecrementTotalUsers(ctx, time.Now(), false)
+	if (usr.User == nil || usr.User.ID == "") && usr.Before != nil && usr.Before.ID != "" {
+		if true || usr.Before.hadAtLeastAMiningAfterHumanVerification(r) { //nolint:revive // .
+			return r.incrementOrDecrementTotalUsers(ctx, time.Now(), false)
+		}
 	}
 
 	return nil

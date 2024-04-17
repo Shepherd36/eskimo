@@ -63,10 +63,12 @@ func (r *repository) updateTotalUsersPerCountryCount(ctx context.Context, usr *U
 		usr.User.Country != usr.Before.Country &&
 		usr.User.hadAtLeastAMiningAfterHumanVerification(r) &&
 		usr.Before.hadAtLeastAMiningAfterHumanVerification(r)
-	if !isFirstMiningAfterHumanVerification &&
-		!isDeleteAfterHumanVerification &&
-		!isCountryChangedAfterHumanVerification {
-		return errors.Wrap(ctx.Err(), "context failed")
+	if false {
+		if !isFirstMiningAfterHumanVerification &&
+			!isDeleteAfterHumanVerification &&
+			!isCountryChangedAfterHumanVerification {
+			return errors.Wrap(ctx.Err(), "context failed")
+		}
 	}
 	nextIndex := 1
 	values := make([]string, 0, 1+1)

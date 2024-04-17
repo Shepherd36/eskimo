@@ -494,7 +494,7 @@ func generateUsernameKeywords(username string) []string {
 	}
 	keywordsMap := make(map[string]struct{})
 	for _, part := range append(strings.Split(username, "."), username) {
-		for i := 0; i < len(part); i++ {
+		for i := range len(part) {
 			keywordsMap[part[:i+1]] = struct{}{}
 			keywordsMap[part[len(part)-1-i:]] = struct{}{}
 		}

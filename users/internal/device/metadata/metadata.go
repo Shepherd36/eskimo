@@ -122,7 +122,7 @@ func (r *repository) GetDeviceMetadataLocation(ctx context.Context, deviceID *de
 	//nolint:godox // .
 	// TODO: TBD if we need to use deviceID.DeviceUniqueID and/or deviceID.UserID to find some default/preferred value for the user.
 
-	result, err := r.ip2LocationDB.Get_all(clientIP.String()) //nolint:nosnakecase // External library.
+	result, err := r.ip2LocationDB.Get_all(clientIP.String())
 	if err != nil {
 		log.Error(errors.Wrapf(err, "unable to get country&city for %#v, %v", deviceID, clientIP.String()))
 
@@ -130,7 +130,7 @@ func (r *repository) GetDeviceMetadataLocation(ctx context.Context, deviceID *de
 	}
 
 	return &DeviceLocation{
-		Country: strings.ToUpper(result.Country_short), //nolint:nosnakecase // External library.
+		Country: strings.ToUpper(result.Country_short),
 		City:    result.City,
 	}
 }
@@ -163,7 +163,7 @@ func (r *repository) ReplaceDeviceMetadata(ctx context.Context, input *DeviceMet
 	}
 	input.UpdatedAt = time.Now()
 	var ip2locationRecord ip2location.IP2Locationrecord
-	if ip2locationRecord, err = r.ip2LocationDB.Get_all(clientIP.String()); err != nil { //nolint:nosnakecase // External library.
+	if ip2locationRecord, err = r.ip2LocationDB.Get_all(clientIP.String()); err != nil {
 		return errors.Wrapf(err, "failed to get location information based on IP %v to replace device metadata", clientIP.String())
 	}
 	(&input.ip2LocationRecord).convertIP2Location(&ip2locationRecord)
@@ -523,8 +523,8 @@ func (dm *DeviceMetadata) replaceSQL() (string, []any) {
 
 func (rec *ip2LocationRecord) convertIP2Location(ip *ip2location.IP2Locationrecord) {
 	*rec = ip2LocationRecord{
-		CountryShort:       ip.Country_short, //nolint:nosnakecase // 3rd party library.
-		CountryLong:        ip.Country_long,  //nolint:nosnakecase // 3rd party library.
+		CountryShort:       ip.Country_short,
+		CountryLong:        ip.Country_long,
 		Region:             ip.Region,
 		City:               ip.City,
 		Isp:                ip.Isp,

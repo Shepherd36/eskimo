@@ -63,17 +63,17 @@ func main() {
 		}
 		for idx, record := range records {
 			index := uint64(idx) + offset
-			usr := record
-			if usr.ID == "" {
-				log.Error(errors.Errorf("no user with phone number `%v` found", usr.PhoneNumber))
+			if record.ID == "" {
+				log.Error(errors.Errorf("no user with phone number `%v` found", record.PhoneNumber))
 
 				continue
 			}
-			if usr.CurrentEmail != usr.ID && usr.CurrentEmail != usr.Email {
-				log.Error(errors.Errorf("user with phone number: `%v`, id: `%v` has a different email: `%v`", usr.PhoneNumber, usr.ID, usr.CurrentEmail))
+			if record.CurrentEmail != record.ID && record.CurrentEmail != record.Email {
+				log.Error(errors.Errorf("user with phone number: `%v`, id: `%v` has a different email: `%v`", record.PhoneNumber, record.ID, record.CurrentEmail))
 
 				continue
 			}
+			usr := record //nolint:copyloopvar // We need the copy here to use in goroutine next.
 			wg.Add(1)
 			concurrencyGuard <- struct{}{}
 			go func() {

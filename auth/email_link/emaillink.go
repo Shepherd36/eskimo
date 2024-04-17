@@ -81,7 +81,7 @@ func loadEmailValidationConfiguration(cfg *config) {
 		// If specific one for emails for found - let's use the same one as wintr/auth/ice uses for token generation.
 		if cfg.EmailValidation.JwtSecret == "" {
 			module = strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(applicationYamlKey, "-", "_"), "/", "_"))
-			cfg.EmailValidation.JwtSecret = os.Getenv(module + "_JWT_SECRET") //nolint:goconst // .
+			cfg.EmailValidation.JwtSecret = os.Getenv(module + "_JWT_SECRET")
 			if cfg.EmailValidation.JwtSecret == "" {
 				cfg.EmailValidation.JwtSecret = os.Getenv("JWT_SECRET")
 			}

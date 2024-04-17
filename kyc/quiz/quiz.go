@@ -227,7 +227,7 @@ func (r *repositoryImpl) prepareUserForReset(ctx context.Context, userID UserID,
 	}
 
 	if count < int(r.config.MaxAttemptsAllowed) {
-		for i := 0; i < int(r.config.MaxAttemptsAllowed)-count; i++ {
+		for i := range int(r.config.MaxAttemptsAllowed) - count {
 			ts := now.Add(-stdlibtime.Second * stdlibtime.Duration(i))
 			_, err = r.addFailedAttempt(ctx, userID, time.New(ts), tx, true)
 			if err != nil {

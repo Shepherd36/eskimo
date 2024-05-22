@@ -20,69 +20,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/getConfirmationStatus": {
-            "post": {
-                "description": "Status of the auth process",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "parameters": [
-                    {
-                        "description": "Request params",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/main.StatusArg"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.Auth"
-                        }
-                    },
-                    "403": {
-                        "description": "if invalid or expired login session provided",
-                        "schema": {
-                            "$ref": "#/definitions/server.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "if login session not found or confirmation code verifying failed",
-                        "schema": {
-                            "$ref": "#/definitions/server.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "if syntax fails",
-                        "schema": {
-                            "$ref": "#/definitions/server.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/server.ErrorResponse"
-                        }
-                    },
-                    "504": {
-                        "description": "if request times out",
-                        "schema": {
-                            "$ref": "#/definitions/server.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/getMetadata": {
             "post": {
                 "description": "Fetches user's metadata based on token's data",
@@ -459,9 +396,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/signInWithEmailLink": {
+        "/auth/signInWithConfirmationCode": {
             "post": {
-                "description": "Finishes login flow using magic link",
+                "description": "Finishes login flow using confirmation code",
                 "produces": [
                     "application/json"
                 ],
@@ -475,7 +412,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/main.MagicLinkPayload"
+                            "$ref": "#/definitions/main.LoginFlowPayload"
                         }
                     }
                 ],
@@ -1618,14 +1555,14 @@ const docTemplate = `{
                 }
             }
         },
-        "main.MagicLinkPayload": {
+        "main.LoginFlowPayload": {
             "type": "object",
             "properties": {
                 "confirmationCode": {
                     "type": "string",
                     "example": "999"
                 },
-                "emailToken": {
+                "loginSession": {
                     "type": "string",
                     "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE2ODQzMjQ0NTYsImV4cCI6MTcxNTg2MDQ1NiwiYXVkIjoiIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsIm90cCI6IjUxMzRhMzdkLWIyMWEtNGVhNi1hNzk2LTAxOGIwMjMwMmFhMCJ9.q3xa8Gwg2FVCRHLZqkSedH3aK8XBqykaIy85rRU40nM"
                 }
@@ -1964,15 +1901,6 @@ const docTemplate = `{
                 "language": {
                     "type": "string",
                     "example": "en"
-                }
-            }
-        },
-        "main.StatusArg": {
-            "type": "object",
-            "properties": {
-                "loginSession": {
-                    "type": "string",
-                    "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE2ODQzMjQ0NTYsImV4cCI6MTcxNTg2MDQ1NiwiYXVkIjoiIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsIm90cCI6IjUxMzRhMzdkLWIyMWEtNGVhNi1hNzk2LTAxOGIwMjMwMmFhMCJ9.q3xa8Gwg2FVCRHLZqkSedH3aK8XBqykaIy85rRU40nM"
                 }
             }
         },

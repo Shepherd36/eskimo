@@ -17,56 +17,75 @@ import (
 	"github.com/ice-blockchain/wintr/time"
 )
 
-//nolint:funlen // .
-func (c *client) SignIn(ctx context.Context, emailLinkPayload, confirmationCode string) error {
-	var token magicLinkToken
-	if err := parseJwtToken(emailLinkPayload, c.cfg.EmailValidation.JwtSecret, &token); err != nil {
-		return errors.Wrapf(err, "invalid email token:%v", emailLinkPayload)
+func (c *client) SignIn(ctx context.Context, loginSession, confirmationCode string) (tokens *Tokens, emailConfirmed bool, err error) {
+	now := time.Now()
+	var token loginFlowToken
+	if err = parseJwtToken(loginSession, c.cfg.EmailValidation.JwtSecret, &token); err != nil {
+		return nil, false, errors.Wrapf(err, "invalid login flow token:%v", loginSession)
 	}
 	email := token.Subject
 	id := loginID{Email: email, DeviceUniqueID: token.DeviceUniqueID}
 	els, err := c.getEmailLinkSignInByPk(ctx, &id, token.OldEmail)
 	if err != nil {
 		if storage.IsErr(err, storage.ErrNotFound) {
-			return errors.Wrapf(ErrNoConfirmationRequired, "[getEmailLinkSignInByPk] no pending confirmation for email:%v", email)
+			return nil, false, errors.Wrapf(ErrNoConfirmationRequired, "[getEmailLinkSignInByPk] no pending confirmation for email:%v", id.Email)
 		}
 
-		return errors.Wrapf(err, "failed to get user info by email:%v(old email:%v)", email, token.OldEmail)
+		return nil, false, errors.Wrapf(err, "failed to get user info by email:%v(old email:%v)", id.Email, token.OldEmail)
 	}
-	if vErr := c.verifySignIn(ctx, els, &id, emailLinkPayload, confirmationCode, token.OTP); vErr != nil {
-		return errors.Wrapf(vErr, "can't verify sign in for id:%#v", id)
+	emailConfirmed, issuedTokenSeq, err := c.signIn(ctx, now, els, &id, token.OldEmail, token.NotifyEmail, confirmationCode)
+	if err != nil {
+		return nil, false, errors.Wrapf(err, "can't sign in for email:%v, deviceUniqueID:%v", id.Email, id.DeviceUniqueID)
 	}
-	var emailConfirmed bool
-	if token.OldEmail != "" || (els.PhoneNumberToEmailMigrationUserID != nil && *els.PhoneNumberToEmailMigrationUserID != "") {
-		if err = c.handleEmailModification(ctx, els, email, token.OldEmail, token.NotifyEmail); err != nil {
-			return errors.Wrapf(err, "failed to handle email modification:%v", email)
-		}
-		emailConfirmed = token.OldEmail != ""
-		els.Email = email
+	els.TokenIssuedAt = now
+	tokens, err = c.generateTokens(els.TokenIssuedAt, els, issuedTokenSeq)
+	if err != nil {
+		return nil, false, errors.Wrapf(err, "can't generate tokens for id:%#v", id)
 	}
-	if fErr := c.finishAuthProcess(ctx, &id, *els.UserID, token.OTP, els.IssuedTokenSeq, emailConfirmed, els.Metadata); fErr != nil {
-		var mErr *multierror.Error
-		if token.OldEmail != "" {
-			mErr = multierror.Append(mErr,
-				errors.Wrapf(c.resetEmailModification(ctx, *els.UserID, token.OldEmail),
-					"[reset] resetEmailModification failed for email:%v", token.OldEmail),
-				errors.Wrapf(c.resetFirebaseEmailModification(ctx, els.Metadata, token.OldEmail),
-					"[reset] resetEmailModification failed for email:%v", token.OldEmail),
-			)
-		}
-		mErr = multierror.Append(mErr, errors.Wrapf(fErr, "can't finish auth process for userID:%v,email:%v,otp:%v", els.UserID, email, token.OTP))
-
-		return mErr.ErrorOrNil() //nolint:wrapcheck // .
+	if rErr := c.resetLoginSession(ctx, &id, els, confirmationCode, token.ClientIP, token.LoginSessionNumber); rErr != nil {
+		return nil, false, errors.Wrapf(rErr, "can't reset login session for id:%#v", id)
 	}
 
-	return nil
+	return tokens, emailConfirmed, nil
 }
 
-//nolint:revive // .
-func (c *client) verifySignIn(ctx context.Context, els *emailLinkSignIn, id *loginID, emailLinkPayload, confirmationCode, tokenOTP string) error {
-	if els.OTP == *els.UserID || els.OTP != tokenOTP {
-		return errors.Wrapf(ErrNoConfirmationRequired, "no pending confirmation for email:%v", id.Email)
+//nolint:funlen,revive // .
+func (c *client) signIn(
+	ctx context.Context, now *time.Time, els *emailLinkSignIn, id *loginID, oldEmail, notifyEmail, confirmationCode string,
+) (emailConfirmed bool, issuedTokenSeq int64, err error) {
+	if els.UserID != nil && els.ConfirmationCode == *els.UserID {
+		return false, 0, errors.Wrapf(ErrNoPendingLoginSession, "tokens already provided for id:%#v", id)
 	}
+	if vErr := c.verifySignIn(ctx, els, id, confirmationCode); vErr != nil {
+		return false, 0, errors.Wrapf(vErr, "can't verify sign in for id:%#v", id)
+	}
+	if oldEmail != "" || (els.PhoneNumberToEmailMigrationUserID != nil && *els.PhoneNumberToEmailMigrationUserID != "") {
+		if err = c.handleEmailModification(ctx, els, id.Email, oldEmail, notifyEmail); err != nil {
+			return false, 0, errors.Wrapf(err, "failed to handle email modification:%v", id.Email)
+		}
+		emailConfirmed = oldEmail != ""
+		els.Email = id.Email
+	}
+	issuedTokenSeq, fErr := c.finishAuthProcess(ctx, now, id, *els.UserID, els.IssuedTokenSeq, emailConfirmed, els.Metadata)
+	if fErr != nil {
+		var mErr *multierror.Error
+		if oldEmail != "" {
+			mErr = multierror.Append(mErr,
+				errors.Wrapf(c.resetEmailModification(ctx, *els.UserID, oldEmail),
+					"[reset] resetEmailModification failed for email:%v", oldEmail),
+				errors.Wrapf(c.resetFirebaseEmailModification(ctx, els.Metadata, oldEmail),
+					"[reset] resetEmailModification failed for email:%v", oldEmail),
+			)
+		}
+		mErr = multierror.Append(mErr, errors.Wrapf(fErr, "can't finish auth process for userID:%v,email:%v", els.UserID, id.Email))
+
+		return false, 0, mErr.ErrorOrNil() //nolint:wrapcheck // .
+	}
+
+	return emailConfirmed, issuedTokenSeq, nil
+}
+
+func (c *client) verifySignIn(ctx context.Context, els *emailLinkSignIn, id *loginID, confirmationCode string) error {
 	var shouldBeBlocked bool
 	var mErr *multierror.Error
 	if els.ConfirmationCodeWrongAttemptsCount >= c.cfg.ConfirmationCode.MaxWrongAttemptsCount {
@@ -88,7 +107,7 @@ func (c *client) verifySignIn(ctx context.Context, els *emailLinkSignIn, id *log
 			mErr = multierror.Append(mErr, errors.Wrapf(iErr,
 				"can't increment wrong confirmation code attempts count for email:%v,deviceUniqueID:%v", id.Email, id.DeviceUniqueID))
 		}
-		mErr = multierror.Append(mErr, errors.Wrapf(ErrConfirmationCodeWrong, "wrong confirmation code:%v for linkPayload:%v", confirmationCode, emailLinkPayload))
+		mErr = multierror.Append(mErr, errors.Wrapf(ErrConfirmationCodeWrong, "wrong confirmation code:%v", confirmationCode))
 
 		return mErr.ErrorOrNil() //nolint:wrapcheck // Not needed.
 	}
@@ -116,10 +135,10 @@ func (c *client) increaseWrongConfirmationCodeAttemptsCount(ctx context.Context,
 
 //nolint:revive,funlen // .
 func (c *client) finishAuthProcess(
-	ctx context.Context,
-	id *loginID, userID, otp string, issuedTokenSeq int64,
+	ctx context.Context, now *time.Time,
+	id *loginID, userID string, issuedTokenSeq int64,
 	emailConfirmed bool, md *users.JSON,
-) error {
+) (int64, error) {
 	emailConfirmedAt := "null"
 	if emailConfirmed {
 		emailConfirmedAt = "$2"
@@ -137,37 +156,65 @@ func (c *client) finishAuthProcess(
 		}
 	}
 	if err := mergo.Merge(&mdToUpdate, md, mergo.WithOverride, mergo.WithTypeCheck); err != nil {
-		return errors.Wrapf(err, "failed to merge %#v and %v:%v", md, auth.IceIDClaim, userID)
+		return 0, errors.Wrapf(err, "failed to merge %#v and %v:%v", md, auth.IceIDClaim, userID)
 	}
-	params := []any{id.Email, time.Now().Time, userID, otp, id.DeviceUniqueID, issuedTokenSeq, mdToUpdate}
+	params := []any{id.Email, now.Time, userID, id.DeviceUniqueID, issuedTokenSeq, mdToUpdate}
+	type resp struct {
+		IssuedTokenSeq int64
+	}
 	sql := fmt.Sprintf(`
 			with metadata_update as (
 				INSERT INTO account_metadata(user_id, metadata)
-				VALUES ($3, $7::jsonb) ON CONFLICT(user_id) DO UPDATE
+				VALUES ($3, $6::jsonb) ON CONFLICT(user_id) DO UPDATE
 					SET metadata = EXCLUDED.metadata
 				WHERE account_metadata.metadata != EXCLUDED.metadata
 			) 
 			UPDATE email_link_sign_ins
 				SET token_issued_at = $2,
 					user_id = $3,
-					otp = $3,
 					email_confirmed_at = %[1]v,
 					phone_number_to_email_migration_user_id = null,
 					issued_token_seq = COALESCE(issued_token_seq, 0) + 1,
 					previously_issued_token_seq = COALESCE(issued_token_seq, 0) + 1
 			WHERE email_link_sign_ins.email = $1
-				  AND otp = $4
-				  AND device_unique_id = $5
-				  AND issued_token_seq = $6
-			`, emailConfirmedAt)
-
-	rowsUpdated, err := storage.Exec(ctx, c.db, sql, params...)
+				  AND device_unique_id = $4
+				  AND issued_token_seq = $5
+			RETURNING issued_token_seq`, emailConfirmedAt)
+	updatedValue, err := storage.ExecOne[resp](ctx, c.db, sql, params...)
 	if err != nil {
-		return errors.Wrapf(err, "failed to insert generated token data for:%#v", params...)
-	}
-	if rowsUpdated == 0 {
-		return errors.Wrapf(ErrNoConfirmationRequired, "[finishAuthProcess] No records were updated to finish: race condition")
+		if errors.Is(err, storage.ErrNotFound) {
+			return 0, errors.Wrapf(ErrNoConfirmationRequired, "[finishAuthProcess] No records were updated to finish: race condition")
+		}
+
+		return 0, errors.Wrapf(err, "failed to insert generated token data for:%#v", params...)
 	}
 
-	return nil
+	return updatedValue.IssuedTokenSeq, nil
+}
+
+//nolint:revive // .
+func (c *client) resetLoginSession(
+	ctx context.Context, id *loginID, els *emailLinkSignIn,
+	prevConfirmationCode, clientIP string, loginSessionNumber int64,
+) error {
+	decrementIPAttempts := ""
+	params := []any{els.UserID, id.Email, id.DeviceUniqueID, prevConfirmationCode, els.IssuedTokenSeq + 1}
+	if clientIP != "" && loginSessionNumber > 0 {
+		decrementIPAttempts = `with decrement_ip_login_attempts as (
+				UPDATE sign_ins_per_ip SET
+					login_attempts = GREATEST(sign_ins_per_ip.login_attempts - 1, 0)
+				WHERE ip = $6 AND login_session_number = $7
+			)`
+		params = append(params, clientIP, loginSessionNumber)
+	}
+	sql := fmt.Sprintf(`%v UPDATE email_link_sign_ins
+								SET confirmation_code = $1
+							WHERE email = $2
+								AND device_unique_id = $3
+								AND confirmation_code = $4
+								AND issued_token_seq = $5`, decrementIPAttempts)
+
+	_, err := storage.Exec(ctx, c.db, sql, params...)
+
+	return errors.Wrapf(err, "failed to reset login session by id:%#v and confirmationCode:%v", id, prevConfirmationCode)
 }

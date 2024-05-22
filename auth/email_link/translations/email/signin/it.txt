@@ -1,3 +1,0 @@
-{
-"subject": "Accedi a ice"
-}

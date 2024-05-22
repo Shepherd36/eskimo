@@ -1,3 +1,0 @@
-{
-"subject": "Verifikasi email Anda untuk ice"
-}

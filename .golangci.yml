@@ -517,6 +517,8 @@ linters-settings:
 
 linters:
   disable:
+    # Non adequate behaviour at 1.58 version.
+    - mnd
     - tagalign
     # TODO remove asap!
     - gomoddirectives

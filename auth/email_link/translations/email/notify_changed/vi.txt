@@ -1,3 +1,0 @@
-{
-"subject": "Email đăng nhập của bạn cho ice đã được thay đổi"
-}

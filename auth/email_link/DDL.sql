@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS email_link_sign_ins (
            previously_issued_token_seq            BIGINT DEFAULT 0 NOT NULL,
            confirmation_code_wrong_attempts_count BIGINT DEFAULT 0 NOT NULL,
            email                                  TEXT NOT NULL,
-           otp                                    TEXT NOT NULL,
            confirmation_code                      TEXT,
            user_id                                TEXT,
            phone_number_to_email_migration_user_id TEXT,

@@ -29,9 +29,8 @@ type (
 	Client interface {
 		IceUserIDClient
 		SendSignInLinkToEmail(ctx context.Context, emailValue, deviceUniqueID, language, clientIP string) (loginSession string, err error)
-		SignIn(ctx context.Context, emailLinkPayload, confirmationCode string) error
+		SignIn(ctx context.Context, loginFlowToken, confirmationCode string) (tokens *Tokens, emailConfirmed bool, err error)
 		RegenerateTokens(ctx context.Context, prevToken string) (tokens *Tokens, err error)
-		Status(ctx context.Context, loginSession string) (tokens *Tokens, emailConfirmed bool, err error)
 		UpdateMetadata(ctx context.Context, userID string, metadata *users.JSON) (*users.JSON, error)
 	}
 	IceUserIDClient interface {
@@ -120,18 +119,12 @@ type (
 		Email          string `json:"email,omitempty" example:"someone1@example.com"`
 		DeviceUniqueID string `json:"deviceUniqueId,omitempty" example:"6FB988F3-36F4-433D-9C7C-555887E57EB2" db:"device_unique_id"`
 	}
-	magicLinkToken struct {
-		*jwt.RegisteredClaims
-		OTP            string `json:"otp" example:"c8f64979-9cea-4649-a89a-35607e734e68"`
-		OldEmail       string `json:"oldEmail,omitempty"`
-		NotifyEmail    string `json:"notifyEmail,omitempty"`
-		DeviceUniqueID string `json:"deviceUniqueId,omitempty"`
-	}
 	loginFlowToken struct {
 		*jwt.RegisteredClaims
 		DeviceUniqueID     string `json:"deviceUniqueId,omitempty"`
-		ConfirmationCode   string `json:"confirmationCode,omitempty"`
 		ClientIP           string `json:"clientIP,omitempty"` //nolint:tagliatelle //.
+		OldEmail           string `json:"oldEmail,omitempty"`
+		NotifyEmail        string `json:"notifyEmail,omitempty"`
 		LoginSessionNumber int64  `json:"loginSessionNumber,omitempty"`
 	}
 	emailLinkSignIn struct {
@@ -143,7 +136,6 @@ type (
 		UserID                             *string     `json:"userId" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 		PhoneNumberToEmailMigrationUserID  *string     `json:"-" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 		Email                              string      `json:"email,omitempty" example:"someone1@example.com"`
-		OTP                                string      `json:"otp,omitempty" example:"207d0262-2554-4df9-b954-08cb42718b25"`
 		Language                           string      `json:"language,omitempty" example:"en"`
 		DeviceUniqueID                     string      `json:"deviceUniqueId,omitempty" example:"6FB988F3-36F4-433D-9C7C-555887E57EB2" db:"device_unique_id"`
 		ConfirmationCode                   string      `json:"confirmationCode,omitempty" example:"123"`

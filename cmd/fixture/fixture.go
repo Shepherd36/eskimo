@@ -122,6 +122,7 @@ func (b *TestConnectorsBridge) GetUser(ctx context.Context, tb testing.TB, userI
 	return body, status
 }
 
+//nolint:canonicalheader // .
 func (*TestConnectorsBridge) RequestHeaders(token string, contentTypeOrClientIP ...string) http.Header {
 	reqHeaders := http.Header{}
 	reqHeaders.Set("Authorization", fmt.Sprintf("Bearer %v", token))

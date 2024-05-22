@@ -235,7 +235,7 @@ func (c *client) deleteOldLoginAttempts(ctx context.Context) error {
 }
 
 func (c *client) startOldLoginAttemptsCleaner(ctx context.Context) {
-	ticker := stdlibtime.NewTicker(stdlibtime.Duration(1+rand.Intn(24)) * stdlibtime.Minute) //nolint:gosec,gomnd // Not an  issue.
+	ticker := stdlibtime.NewTicker(stdlibtime.Duration(1+rand.Intn(24)) * stdlibtime.Minute) //nolint:gosec,gomnd,mnd // Not an  issue.
 	defer ticker.Stop()
 
 	for {

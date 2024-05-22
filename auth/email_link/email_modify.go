@@ -41,9 +41,9 @@ func (c *client) handleEmailModification(ctx context.Context, els *emailLinkSign
 		}
 	}
 	if notifyEmail != "" {
-		resetEmailOTP, now := generateOTP(), time.Now()
+		now := time.Now()
 		resetConfirmationCode := generateConfirmationCode()
-		uErr := c.upsertEmailLinkSignIn(ctx, oldEmail, els.DeviceUniqueID, resetEmailOTP, resetConfirmationCode, now)
+		uErr := c.upsertEmailLinkSignIn(ctx, oldEmail, els.DeviceUniqueID, resetConfirmationCode, now)
 		if uErr != nil {
 			return multierror.Append( //nolint:wrapcheck // .
 				errors.Wrapf(c.resetEmailModification(ctx, usr.ID, oldEmail), "[reset] resetEmailModification failed for email:%v", oldEmail),
@@ -53,7 +53,7 @@ func (c *client) handleEmailModification(ctx context.Context, els *emailLinkSign
 		}
 		resetEmailPayload, rErr := c.generateMagicLinkPayload(
 			&loginID{Email: oldEmail, DeviceUniqueID: els.DeviceUniqueID},
-			newEmail, "", resetEmailOTP, now)
+			newEmail, now)
 		if rErr != nil {
 			return multierror.Append( //nolint:wrapcheck // .
 				errors.Wrapf(c.resetEmailModification(ctx, usr.ID, oldEmail), "[reset] resetEmailModification failed for email:%v", oldEmail),

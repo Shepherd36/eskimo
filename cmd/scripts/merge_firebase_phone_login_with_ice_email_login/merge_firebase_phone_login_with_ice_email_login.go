@@ -73,7 +73,7 @@ func main() {
 
 				continue
 			}
-			usr := record //nolint:copyloopvar // We need the copy here to use in goroutine next.
+			usr := record
 			wg.Add(1)
 			concurrencyGuard <- struct{}{}
 			go func() {

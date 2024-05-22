@@ -10,7 +10,6 @@ import (
 	stdlibtime "time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
@@ -42,9 +41,8 @@ func (c *client) SendSignInLinkToEmail(ctx context.Context, emailValue, deviceUn
 			return "", errors.Wrapf(vErr, "can't validate modification email for:%#v", oldID)
 		}
 	}
-	otp := generateOTP()
 	confirmationCode := generateConfirmationCode()
-	loginSession, err = c.generateLoginSession(&id, confirmationCode, clientIP, loginSessionNumber)
+	loginSession, err = c.generateLoginSession(&id, clientIP, oldEmail, loginSessionNumber)
 	if err != nil {
 		return "", errors.Wrap(err, "can't call generateLoginSession")
 	}
@@ -53,9 +51,9 @@ func (c *client) SendSignInLinkToEmail(ctx context.Context, emailValue, deviceUn
 			return "", errors.Wrapf(ipErr, "failed increment login attempts for IP:%v (session num %v)", clientIP, loginSessionNumber)
 		}
 	}
-	if uErr := c.upsertEmailLinkSignIn(ctx, id.Email, id.DeviceUniqueID, otp, confirmationCode, now); uErr != nil {
+	if uErr := c.upsertEmailLinkSignIn(ctx, id.Email, id.DeviceUniqueID, confirmationCode, now); uErr != nil {
 		if errors.Is(uErr, ErrUserDuplicate) {
-			oldLoginSession, oErr := c.restoreOldLoginSession(ctx, &id, clientIP, loginSessionNumber)
+			oldLoginSession, oErr := c.restoreOldLoginSession(ctx, &id, clientIP, oldEmail, loginSessionNumber)
 			if oErr != nil {
 				return "", multierror.Append( //nolint:wrapcheck // .
 					errors.Wrapf(oErr, "failed to calculate oldLoginSession"),
@@ -71,14 +69,7 @@ func (c *client) SendSignInLinkToEmail(ctx context.Context, emailValue, deviceUn
 			errors.Wrapf(uErr, "failed to store/update email link sign ins for id:%#v", id),
 		).ErrorOrNil()
 	}
-	payload, pErr := c.generateMagicLinkPayload(&id, oldEmail, oldEmail, otp, now)
-	if pErr != nil {
-		return "", multierror.Append( //nolint:wrapcheck // .
-			errors.Wrapf(c.decrementIPLoginAttempts(ctx, clientIP, loginSessionNumber), "[rollback] failed to rollback login attempts for ip"),
-			errors.Wrapf(pErr, "can't generate magic link payload for id: %#v", id),
-		).ErrorOrNil()
-	}
-	if sErr := c.sendMagicLink(ctx, &id, oldEmail, payload, language); sErr != nil {
+	if sErr := c.sendConfirmationCode(ctx, &id, oldEmail, confirmationCode, language); sErr != nil {
 		return "", multierror.Append( //nolint:wrapcheck // .
 			errors.Wrapf(c.decrementIPLoginAttempts(ctx, clientIP, loginSessionNumber), "[rollback] failed to rollback login attempts for ip"),
 			errors.Wrapf(sErr, "can't send magic link for id:%#v", id),
@@ -88,15 +79,8 @@ func (c *client) SendSignInLinkToEmail(ctx context.Context, emailValue, deviceUn
 	return loginSession, nil
 }
 
-func (c *client) restoreOldLoginSession(ctx context.Context, id *loginID, clientIP string, loginSessionNumber int64) (string, error) {
-	existingSignIn, dErr := c.getEmailLinkSignIn(ctx, id, true)
-	if dErr != nil {
-		return "", multierror.Append( //nolint:wrapcheck // .
-			errors.Wrapf(c.decrementIPLoginAttempts(ctx, clientIP, loginSessionNumber), "[rollback] failed to rollback login attempts for ip"),
-			errors.Wrapf(dErr, "can't get email link sign in information by:%#v", id),
-		).ErrorOrNil()
-	}
-	oldLoginSession, dErr := c.generateLoginSession(id, existingSignIn.ConfirmationCode, clientIP, loginSessionNumber)
+func (c *client) restoreOldLoginSession(ctx context.Context, id *loginID, clientIP, oldEmail string, loginSessionNumber int64) (string, error) {
+	oldLoginSession, dErr := c.generateLoginSession(id, clientIP, oldEmail, loginSessionNumber)
 	if dErr != nil {
 		return "", multierror.Append( //nolint:wrapcheck // .
 			errors.Wrapf(c.decrementIPLoginAttempts(ctx, clientIP, loginSessionNumber), "[rollback] failed to rollback login attempts for ip"),
@@ -164,8 +148,7 @@ func (c *client) validateEmailModification(ctx context.Context, newEmail string,
 	return nil
 }
 
-func (c *client) sendMagicLink(ctx context.Context, id *loginID, oldEmail, payload, language string) error {
-	authLink := c.getAuthLink(payload, language)
+func (c *client) sendConfirmationCode(ctx context.Context, id *loginID, oldEmail, confirmationCode, language string) error {
 	var emailType string
 	if oldEmail != "" {
 		emailType = modifyEmailType
@@ -173,21 +156,21 @@ func (c *client) sendMagicLink(ctx context.Context, id *loginID, oldEmail, paylo
 		emailType = signInEmailType
 	}
 
-	return errors.Wrapf(c.sendEmailWithType(ctx, emailType, id.Email, language, authLink), "failed to send validation email for id:%#v", id)
+	return errors.Wrapf(c.sendEmailWithType(ctx, emailType, id.Email, language, confirmationCode), "failed to send validation email for id:%#v", id)
 }
 
-func (c *client) sendEmailWithType(ctx context.Context, emailType, toEmail, language, link string) error {
+func (c *client) sendEmailWithType(ctx context.Context, emailType, toEmail, language, confirmationCode string) error {
 	var tmpl *emailTemplate
 	tmpl, ok := allEmailLinkTemplates[emailType][language]
 	if !ok {
 		tmpl = allEmailLinkTemplates[emailType][defaultLanguage]
 	}
 	data := struct {
-		Email string
-		Link  string
+		Email            string
+		ConfirmationCode string
 	}{
-		Email: toEmail,
-		Link:  link,
+		Email:            toEmail,
+		ConfirmationCode: confirmationCode,
 	}
 
 	return errors.Wrapf(c.emailClient.Send(ctx, &email.Parcel{
@@ -206,30 +189,27 @@ func (c *client) sendEmailWithType(ctx context.Context, emailType, toEmail, lang
 	}), "failed to send email with type:%v for user with email:%v", emailType, toEmail)
 }
 
-//nolint:revive,lll // .
-func (c *client) upsertEmailLinkSignIn(ctx context.Context, toEmail, deviceUniqueID, otp, code string, now *time.Time) error {
+//nolint:lll // .
+func (c *client) upsertEmailLinkSignIn(ctx context.Context, toEmail, deviceUniqueID, code string, now *time.Time) error {
 	confirmationCodeWrongAttempts := 0
-	params := []any{now.Time, toEmail, deviceUniqueID, otp, code, confirmationCodeWrongAttempts, userIDForPhoneNumberToEmailMigration(ctx)}
+	params := []any{now.Time, toEmail, deviceUniqueID, code, confirmationCodeWrongAttempts, userIDForPhoneNumberToEmailMigration(ctx)}
 	sql := fmt.Sprintf(`INSERT INTO email_link_sign_ins (
 							created_at,
 							email,
 							device_unique_id,
-							otp,
 							confirmation_code,
 							confirmation_code_wrong_attempts_count,
 							phone_number_to_email_migration_user_id)
-						VALUES ($1, $2, $3, $4, $5, $6, NULLIF($7,''))
+						VALUES ($1, $2, $3, $4, $5, NULLIF($6,''))
 						ON CONFLICT (email, device_unique_id) DO UPDATE 
-							SET otp           				     	   = EXCLUDED.otp, 
-								created_at    				     	   = EXCLUDED.created_at,
+							SET created_at    				     	   = EXCLUDED.created_at,
 								confirmation_code 		          	   = EXCLUDED.confirmation_code,
 								confirmation_code_wrong_attempts_count = EXCLUDED.confirmation_code_wrong_attempts_count,
 								phone_number_to_email_migration_user_id = COALESCE(NULLIF(EXCLUDED.phone_number_to_email_migration_user_id,''),email_link_sign_ins.phone_number_to_email_migration_user_id),
 						        email_confirmed_at                     = null,
 						        user_id                                = null
 						WHERE   (extract(epoch from email_link_sign_ins.created_at)::bigint/%[1]v)  != (extract(epoch from EXCLUDED.created_at::timestamp)::bigint/%[1]v)
-						   AND (email_link_sign_ins.otp                                             != EXCLUDED.otp
-						   OR   email_link_sign_ins.confirmation_code 		          	            != EXCLUDED.confirmation_code
+						   AND   (email_link_sign_ins.confirmation_code 		          	        != EXCLUDED.confirmation_code
 						   OR   email_link_sign_ins.confirmation_code_wrong_attempts_count          != EXCLUDED.confirmation_code_wrong_attempts_count)`,
 		uint64(duplicatedSignInRequestsInLessThan/stdlibtime.Second))
 	rowsInserted, err := storage.Exec(ctx, c.db, sql, params...)
@@ -259,8 +239,8 @@ func (c *client) upsertIPLoginAttempt(ctx context.Context, id *loginID, clientIP
 	return nil
 }
 
-func (c *client) generateMagicLinkPayload(id *loginID, oldEmail, notifyEmail, otp string, now *time.Time) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, magicLinkToken{
+func (c *client) generateMagicLinkPayload(id *loginID, oldEmail string, now *time.Time) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, loginFlowToken{
 		RegisteredClaims: &jwt.RegisteredClaims{
 			Issuer:    jwtIssuer,
 			Subject:   id.Email,
@@ -269,24 +249,18 @@ func (c *client) generateMagicLinkPayload(id *loginID, oldEmail, notifyEmail, ot
 			NotBefore: jwt.NewNumericDate(*now.Time),
 			IssuedAt:  jwt.NewNumericDate(*now.Time),
 		},
-		OTP:            otp,
 		OldEmail:       oldEmail,
-		NotifyEmail:    notifyEmail,
 		DeviceUniqueID: id.DeviceUniqueID,
 	})
 	payload, err := token.SignedString([]byte(c.cfg.EmailValidation.JwtSecret))
 	if err != nil {
-		return "", errors.Wrapf(err, "can't generate link payload for id:%#v,otp:%v,now:%v", id, otp, now)
+		return "", errors.Wrapf(err, "can't generate link payload for id:%#v,now:%v", id, now)
 	}
 
 	return payload, nil
 }
 
-func (c *client) getAuthLink(token, language string) string {
-	return fmt.Sprintf("%s?token=%s&lang=%s", c.cfg.EmailValidation.AuthLink, token, language)
-}
-
-func (c *client) generateLoginSession(id *loginID, confirmationCode, clientIP string, loginSessionNumber int64) (string, error) {
+func (c *client) generateLoginSession(id *loginID, clientIP, oldEmail string, loginSessionNumber int64) (string, error) {
 	now := time.Now()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, loginFlowToken{
 		RegisteredClaims: &jwt.RegisteredClaims{
@@ -298,8 +272,9 @@ func (c *client) generateLoginSession(id *loginID, confirmationCode, clientIP st
 			IssuedAt:  jwt.NewNumericDate(*now.Time),
 		},
 		DeviceUniqueID:     id.DeviceUniqueID,
-		ConfirmationCode:   confirmationCode,
 		LoginSessionNumber: loginSessionNumber,
+		OldEmail:           oldEmail,
+		NotifyEmail:        oldEmail,
 		ClientIP:           clientIP,
 	})
 	payload, err := token.SignedString([]byte(c.cfg.LoginSession.JwtSecret))
@@ -308,10 +283,6 @@ func (c *client) generateLoginSession(id *loginID, confirmationCode, clientIP st
 	}
 
 	return payload, nil
-}
-
-func generateOTP() string {
-	return uuid.NewString()
 }
 
 func generateConfirmationCode() string {

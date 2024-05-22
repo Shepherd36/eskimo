@@ -1,3 +1,0 @@
-{
-"subject": "Twoje konto email do logowania w ice zostało zmienione"
-}

@@ -140,6 +140,10 @@ type (
 		EmailToken       string `json:"emailToken" required:"true" allowUnauthorized:"true" example:"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE2ODQzMjQ0NTYsImV4cCI6MTcxNTg2MDQ1NiwiYXVkIjoiIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsIm90cCI6IjUxMzRhMzdkLWIyMWEtNGVhNi1hNzk2LTAxOGIwMjMwMmFhMCJ9.q3xa8Gwg2FVCRHLZqkSedH3aK8XBqykaIy85rRU40nM"` //nolint:lll // .
 		ConfirmationCode string `json:"confirmationCode" required:"true" example:"999"`
 	}
+	LoginFlowPayload struct {
+		LoginSession     string `json:"loginSession" required:"true" allowUnauthorized:"true" example:"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE2ODQzMjQ0NTYsImV4cCI6MTcxNTg2MDQ1NiwiYXVkIjoiIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsIm90cCI6IjUxMzRhMzdkLWIyMWEtNGVhNi1hNzk2LTAxOGIwMjMwMmFhMCJ9.q3xa8Gwg2FVCRHLZqkSedH3aK8XBqykaIy85rRU40nM"` //nolint:lll // .
+		ConfirmationCode string `json:"confirmationCode" required:"true" example:"999"`
+	}
 	RefreshToken struct {
 		Authorization string `header:"Authorization" swaggerignore:"true" required:"true" allowForbiddenWriteOperation:"true" allowUnauthorized:"true"`
 	}
@@ -182,16 +186,14 @@ const (
 	emailAlreadySetErrorCode                = "EMAIL_ALREADY_SET"
 	accountLostErrorCode                    = "ACCOUNT_LOST"
 
-	linkExpiredErrorCode    = "EXPIRED_LINK"
-	invalidOTPCodeErrorCode = "INVALID_OTP"
-	dataMismatchErrorCode   = "DATA_MISMATCH"
+	expiredLoginSessionErrorCode = "EXPIRED_LOGIN_SESSION"
+	invalidLoginSessionErrorCode = "INVALID_LOGIN_SESSION"
+	dataMismatchErrorCode        = "DATA_MISMATCH"
 
 	confirmationCodeNotFoundErrorCode         = "CONFIRMATION_CODE_NOT_FOUND"
 	confirmationCodeAttemptsExceededErrorCode = "CONFIRMATION_CODE_ATTEMPTS_EXCEEDED"
 	confirmationCodeWrongErrorCode            = "CONFIRMATION_CODE_WRONG"
 	tooManyRequests                           = "TOO_MANY_REQUESTS"
-
-	noPendingLoginSessionErrorCode = "NO_PENDING_LOGIN_SESSION"
 
 	quizUnknownQuestionNumErrorCode = "QUIZ_UNKNOWN_QUESTION_NUM"
 	quizDisbledErrorCode            = "QUIZ_DISABLED"

@@ -91,7 +91,6 @@ func (c *client) getUserByIDOrPk(ctx context.Context, userID string, id *loginID
 					COALESCE(issued_token_seq, 0) 			 			AS issued_token_seq,
 					blocked_until,
 					COALESCE(confirmation_code_wrong_attempts_count, 0) AS confirmation_code_wrong_attempts_count,
-					otp,
 					confirmation_code,
 					user_id,
 					phone_number_to_email_migration_user_id,
@@ -109,7 +108,6 @@ func (c *client) getUserByIDOrPk(ctx context.Context, userID string, id *loginID
 					issued_token_seq,
 					blocked_until,
 					confirmation_code_wrong_attempts_count,
-					otp,
 					confirmation_code,
 					$1 												   AS user_id,
 					phone_number_to_email_migration_user_id,
@@ -130,7 +128,6 @@ func (c *client) getUserByIDOrPk(ctx context.Context, userID string, id *loginID
 					emails.issued_token_seq       			 	  	   AS issued_token_seq,
 					emails.blocked_until       			 	  	   	   AS blocked_until,
 					emails.confirmation_code_wrong_attempts_count 	   AS confirmation_code_wrong_attempts_count,
-					emails.otp       						 	  	   AS otp,
 					emails.confirmation_code       			 	  	   AS confirmation_code,
 					u.id 									 	  	   AS user_id,
 					emails.phone_number_to_email_migration_user_id 	   AS phone_number_to_email_migration_user_id,
@@ -149,24 +146,6 @@ func (c *client) getUserByIDOrPk(ctx context.Context, userID string, id *loginID
 	`, userID, id.Email, id.DeviceUniqueID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get user by pk:%#v)", id)
-	}
-
-	return usr, nil
-}
-
-func (c *client) getConfirmedEmailLinkSignIn(ctx context.Context, id *loginID, confirmationCode string) (*emailLinkSignIn, error) {
-	if ctx.Err() != nil {
-		return nil, errors.Wrap(ctx.Err(), "get user by id or email failed because context failed")
-	}
-	sql := `SELECT email_link_sign_ins.*, account_metadata.metadata
-			FROM email_link_sign_ins
-			LEFT JOIN account_metadata ON email_link_sign_ins.user_id = account_metadata.user_id
-			WHERE confirmation_code = $1 
-	  			  AND email = $2
-				  AND device_unique_id = $3`
-	usr, err := storage.Get[emailLinkSignIn](ctx, c.db, sql, confirmationCode, id.Email, id.DeviceUniqueID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get user by confirmation code:%v and id:%#v", confirmationCode, id)
 	}
 
 	return usr, nil

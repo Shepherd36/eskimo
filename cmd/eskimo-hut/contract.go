@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	emaillink "github.com/ice-blockchain/eskimo/auth/email_link"
+	facekyc "github.com/ice-blockchain/eskimo/kyc/face"
 	kycquiz "github.com/ice-blockchain/eskimo/kyc/quiz"
 	kycsocial "github.com/ice-blockchain/eskimo/kyc/social"
 	"github.com/ice-blockchain/eskimo/users"
@@ -128,7 +129,8 @@ type (
 	User struct {
 		*users.User
 		*kycquiz.QuizStatus
-		Checksum string `json:"checksum,omitempty" example:"1232412415326543647657"`
+		Checksum         string `json:"checksum,omitempty" example:"1232412415326543647657"`
+		KycFaceAvailable bool   `json:"kycFaceAvailable,omitempty" example:"true"`
 	}
 	Auth struct {
 		LoginSession string `json:"loginSession" example:"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE2ODQzMjQ0NTYsImV4cCI6MTcxNTg2MDQ1NiwiYXVkIjoiIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsIm90cCI6IjUxMzRhMzdkLWIyMWEtNGVhNi1hNzk2LTAxOGIwMjMwMmFhMCJ9.q3xa8Gwg2FVCRHLZqkSedH3aK8XBqykaIy85rRU40nM"` //nolint:lll // .
@@ -156,6 +158,7 @@ type (
 		XClientType string `form:"x_client_type" swaggerignore:"true" required:"false" example:"web"`
 	}
 	TryResetKYCStepsRequestBody struct {
+		NextKYCStep      *users.KYCStep  `form:"nextKYCStep" required:"false" swaggerignore:"true" example:"1"`
 		Authorization    string          `header:"Authorization" swaggerignore:"true" required:"true" example:"some token"`
 		XAccountMetadata string          `header:"X-Account-Metadata" swaggerignore:"true" required:"false" example:"some token"`
 		UserID           string          `uri:"userId" required:"true" allowForbiddenWriteOperation:"true" swaggerignore:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"` //nolint:lll // .
@@ -220,6 +223,7 @@ type (
 		quizRepository      kycquiz.Repository
 		authEmailLinkClient emaillink.Client
 		socialRepository    kycsocial.Repository
+		faceKycClient       facekyc.Client
 	}
 	config struct {
 		APIKey  string `yaml:"api-key" mapstructure:"api-key"` //nolint:tagliatelle // Nope.

@@ -11,6 +11,7 @@ import (
 
 	emaillink "github.com/ice-blockchain/eskimo/auth/email_link"
 	"github.com/ice-blockchain/eskimo/cmd/eskimo-hut/api"
+	facekyc "github.com/ice-blockchain/eskimo/kyc/face"
 	kycquiz "github.com/ice-blockchain/eskimo/kyc/quiz"
 	"github.com/ice-blockchain/eskimo/kyc/social"
 	"github.com/ice-blockchain/eskimo/users"
@@ -53,6 +54,7 @@ func (s *service) Init(ctx context.Context, cancel context.CancelFunc) {
 	s.authEmailLinkClient = emaillink.NewClient(ctx, s.usersProcessor, server.Auth(ctx))
 	s.socialRepository = social.New(ctx, s.usersProcessor)
 	s.quizRepository = kycquiz.NewRepository(ctx, s.usersProcessor)
+	s.faceKycClient = facekyc.New(s.usersProcessor)
 }
 
 func (s *service) Close(ctx context.Context) error {

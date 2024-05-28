@@ -103,6 +103,9 @@ definitions:
       id:
         example: did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2
         type: string
+      kycFaceAvailable:
+        example: true
+        type: boolean
       kycQuizAvailabilityEndedAt:
         type: string
       kycQuizAvailabilityStartedAt:
@@ -325,6 +328,9 @@ definitions:
       id:
         example: did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2
         type: string
+      kycFaceAvailable:
+        example: true
+        type: boolean
       kycQuizAvailabilityEndedAt:
         type: string
       kycQuizAvailabilityStartedAt:

@@ -60,6 +60,12 @@ kyc/social:
         - US
     facebook:
       allow-long-live-tokens: true
+kyc/face:
+  threeDiVi:
+    bafToken: bogus
+    bafHost: http://bogus.com/
+    availabilityUrl:
+    concurrentUsers: 1
 kyc/quiz:
   environment: local
   enable-alerts: false

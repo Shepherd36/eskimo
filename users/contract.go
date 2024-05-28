@@ -198,12 +198,15 @@ type (
 
 		IsEmailUsedBySomebodyElse(ctx context.Context, userID, email string) (bool, error)
 	}
+	ResetKycClient interface {
+		Reset(ctx context.Context, userID string) error
+	}
 	WriteRepository interface {
 		CreateUser(ctx context.Context, usr *User, clientIP net.IP) error
 		DeleteUser(ctx context.Context, userID UserID) error
 		ModifyUser(ctx context.Context, usr *User, profilePicture *multipart.FileHeader) error
 
-		TryResetKYCSteps(ctx context.Context, userID string) (*User, error)
+		TryResetKYCSteps(ctx context.Context, resetClient ResetKycClient, userID string) (*User, error)
 	}
 	// Repository main API exposed that handles all the features of this package.
 	Repository interface {
@@ -276,7 +279,6 @@ type (
 	userPingSource struct {
 		*processor
 	}
-
 	// | repository implements the public API that this package exposes.
 	repository struct {
 		cfg *config
@@ -293,9 +295,6 @@ type (
 	}
 	// | config holds the configuration of this package mounted from `application.yaml`.
 	config struct {
-		KYC struct {
-			KYCStep1ResetURL string `yaml:"kyc-step1-reset-url" mapstructure:"kyc-step1-reset-url"` //nolint:tagliatelle // Nope.
-		} `yaml:"kyc" mapstructure:"kyc"`
 		messagebroker.Config      `mapstructure:",squash"` //nolint:tagliatelle // Nope.
 		GlobalAggregationInterval struct {
 			MinMiningSessionDuration stdlibtime.Duration `yaml:"minMiningSessionDuration"`

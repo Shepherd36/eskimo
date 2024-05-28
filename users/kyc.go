@@ -4,9 +4,7 @@ package users
 
 import (
 	"context"
-	"net/http"
 	"sync"
-	stdlibtime "time"
 
 	"github.com/goccy/go-json"
 	"github.com/hashicorp/go-multierror"
@@ -17,7 +15,7 @@ import (
 	"github.com/ice-blockchain/wintr/log"
 )
 
-func (r *repository) TryResetKYCSteps(ctx context.Context, userID string) (*User, error) {
+func (r *repository) TryResetKYCSteps(ctx context.Context, resetClient ResetKycClient, userID string) (*User, error) {
 	sql := `SELECT r.kyc_steps_to_reset,
 				   u.*
 			FROM users u
@@ -34,14 +32,14 @@ func (r *repository) TryResetKYCSteps(ctx context.Context, userID string) (*User
 		r.sanitizeUserForUI(&resp.User)
 
 		return &resp.User, nil
-	} else if err = r.resetKYCSteps(ctx, userID, resp.KYCStepsToReset); err != nil {
+	} else if err = r.resetKYCSteps(ctx, resetClient, userID, resp.KYCStepsToReset); err != nil {
 		return nil, errors.Wrapf(err, "failed to resetKYCSteps for userID:%v", userID)
 	}
 
-	return r.TryResetKYCSteps(ctx, userID)
+	return r.TryResetKYCSteps(ctx, resetClient, userID)
 }
 
-func (r *repository) resetKYCSteps(ctx context.Context, userID string, kycStepsToBeReset []KYCStep) error {
+func (r *repository) resetKYCSteps(ctx context.Context, resetClient ResetKycClient, userID string, kycStepsToBeReset []KYCStep) error {
 	kycStepResetPipelines := make(map[KYCStep]struct{}, len(kycStepsToBeReset))
 	for _, kycStep := range kycStepsToBeReset {
 		if kycStep == LivenessDetectionKYCStep || kycStep == FacialRecognitionKYCStep {
@@ -56,7 +54,7 @@ func (r *repository) resetKYCSteps(ctx context.Context, userID string, kycStepsT
 	for kycStep := range kycStepResetPipelines {
 		go func(step KYCStep) {
 			defer wg.Done()
-			errs <- errors.Wrapf(r.resetKYCStep(ctx, userID, step), "failed to resetKYCStep(%v) for userID:%v", step, userID)
+			errs <- errors.Wrapf(r.resetKYCStep(ctx, resetClient, userID, step), "failed to resetKYCStep(%v) for userID:%v", step, userID)
 		}(kycStep)
 	}
 	wg.Wait()
@@ -73,10 +71,10 @@ func (r *repository) resetKYCSteps(ctx context.Context, userID string, kycStepsT
 	return errors.Wrapf(err, "failed to delete kyc step reset request for userID:%v", userID)
 }
 
-func (r *repository) resetKYCStep(ctx context.Context, userID string, step KYCStep) error {
+func (r *repository) resetKYCStep(ctx context.Context, resetClient ResetKycClient, userID string, step KYCStep) error {
 	switch step { //nolint:exhaustive // Not needed yet.
 	case FacialRecognitionKYCStep:
-		if err := r.resetFacialRecognitionKYCStep(ctx, userID); err != nil {
+		if err := resetClient.Reset(ctx, userID); err != nil {
 			return errors.Wrapf(err, "failed to resetFacialRecognitionKYCStep for userID:%v", userID)
 		}
 	default:
@@ -109,40 +107,4 @@ func init() { //nolint:gochecknoinits // It's the only way to tweak the client.
 	req.DefaultClient().SetJsonMarshal(json.Marshal)
 	req.DefaultClient().SetJsonUnmarshal(json.Unmarshal)
 	req.DefaultClient().GetClient().Timeout = requestDeadline
-}
-
-//nolint:gomnd,funlen // Specific config.
-func (r *repository) resetFacialRecognitionKYCStep(ctx context.Context, userID string) error {
-	if resp, err := req.
-		SetContext(ctx).
-		SetRetryCount(25).
-		SetRetryBackoffInterval(10*stdlibtime.Millisecond, 1*stdlibtime.Second).
-		SetRetryHook(func(resp *req.Response, err error) {
-			if err != nil {
-				log.Error(errors.Wrap(err, "failed to delete face auth state for user, retrying... "))
-			} else {
-				body, bErr := resp.ToString()
-				log.Error(errors.Wrapf(bErr, "failed to parse negative response body for delete face auth state for user"))
-				log.Error(errors.Errorf("failed to delete face auth state for user with status code:%v, body:%v, retrying... ", resp.GetStatusCode(), body))
-			}
-		}).
-		SetRetryCondition(func(resp *req.Response, err error) bool {
-			return err != nil || (resp.GetStatusCode() != http.StatusOK && resp.GetStatusCode() != http.StatusNoContent && resp.GetStatusCode() != http.StatusUnauthorized && resp.GetStatusCode() != http.StatusForbidden) //nolint:lll // .
-		}).
-		AddQueryParam("caller", "eskimo-hut").
-		AddQueryParam("userId", userID).
-		SetHeader("Authorization", authorization(ctx)).
-		SetHeader("X-Account-Metadata", xAccountMetadata(ctx)).
-		SetBodyJsonMarshal(&struct {
-			UserID string `json:"userId"`
-		}{UserID: userID}).
-		Delete(r.cfg.KYC.KYCStep1ResetURL); err != nil {
-		return errors.Wrapf(err, "failed to delete face auth state for userID:%v", userID)
-	} else if statusCode := resp.GetStatusCode(); statusCode != http.StatusOK && statusCode != http.StatusNoContent {
-		return errors.Errorf("[%v]failed to delete face auth state for userID:%v", statusCode, userID)
-	} else if _, err2 := resp.ToBytes(); err2 != nil {
-		return errors.Wrapf(err2, "failed to read body of delete face auth state request for userID:%v", userID)
-	} else { //nolint:revive // .
-		return nil
-	}
 }

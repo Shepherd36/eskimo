@@ -1638,6 +1638,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"
                 },
+                "kycFaceAvailable": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "kycQuizAvailabilityEndedAt": {
                     "type": "string"
                 },
@@ -1961,6 +1965,10 @@ const docTemplate = `{
                 "id": {
                     "type": "string",
                     "example": "did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"
+                },
+                "kycFaceAvailable": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "kycQuizAvailabilityEndedAt": {
                     "type": "string"

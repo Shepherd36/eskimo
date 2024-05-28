@@ -20,7 +20,7 @@ import (
 func (c *client) SignIn(ctx context.Context, loginSession, confirmationCode string) (tokens *Tokens, emailConfirmed bool, err error) {
 	now := time.Now()
 	var token loginFlowToken
-	if err = parseJwtToken(loginSession, c.cfg.EmailValidation.JwtSecret, &token); err != nil {
+	if err = parseJwtToken(loginSession, c.cfg.LoginSession.JwtSecret, &token); err != nil {
 		return nil, false, errors.Wrapf(err, "invalid login flow token:%v", loginSession)
 	}
 	email := token.Subject

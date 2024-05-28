@@ -65,28 +65,9 @@ func (c *client) Close() error {
 func loadConfiguration() *config {
 	var cfg config
 	appcfg.MustLoadFromKey(applicationYamlKey, &cfg)
-	loadEmailValidationConfiguration(&cfg)
 	loadLoginSessionConfiguration(&cfg)
 
 	return &cfg
-}
-
-func loadEmailValidationConfiguration(cfg *config) {
-	if cfg.EmailValidation.JwtSecret == "" {
-		module := strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(applicationYamlKey, "-", "_"), "/", "_"))
-		cfg.EmailValidation.JwtSecret = os.Getenv(module + "_EMAIL_JWT_SECRET")
-		if cfg.EmailValidation.JwtSecret == "" {
-			cfg.EmailValidation.JwtSecret = os.Getenv("EMAIL_JWT_SECRET")
-		}
-		// If specific one for emails for found - let's use the same one as wintr/auth/ice uses for token generation.
-		if cfg.EmailValidation.JwtSecret == "" {
-			module = strings.ToUpper(strings.ReplaceAll(strings.ReplaceAll(applicationYamlKey, "-", "_"), "/", "_"))
-			cfg.EmailValidation.JwtSecret = os.Getenv(module + "_JWT_SECRET")
-			if cfg.EmailValidation.JwtSecret == "" {
-				cfg.EmailValidation.JwtSecret = os.Getenv("JWT_SECRET")
-			}
-		}
-	}
 }
 
 func loadLoginSessionConfiguration(cfg *config) {
@@ -108,9 +89,6 @@ func loadLoginSessionConfiguration(cfg *config) {
 }
 
 func (cfg *config) validate() {
-	if cfg.EmailValidation.JwtSecret == "" {
-		log.Panic(errors.New("no email jwt secret provided"))
-	}
 	if cfg.LoginSession.JwtSecret == "" {
 		log.Panic(errors.New("no login session jwt secret provided"))
 	}

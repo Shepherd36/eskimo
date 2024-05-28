@@ -85,7 +85,6 @@ auth/email-link:
   fromEmailName: ice
   emailValidation:
     authLink: https://some.webpage.example/somePath
-    jwtSecret: bogus
     expirationTime: 1h
     blockDuration: 10m
     sameIpRateCheckPeriod: 1h

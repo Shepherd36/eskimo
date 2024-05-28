@@ -252,7 +252,7 @@ func (c *client) generateMagicLinkPayload(id *loginID, oldEmail string, now *tim
 		OldEmail:       oldEmail,
 		DeviceUniqueID: id.DeviceUniqueID,
 	})
-	payload, err := token.SignedString([]byte(c.cfg.EmailValidation.JwtSecret))
+	payload, err := token.SignedString([]byte(c.cfg.LoginSession.JwtSecret))
 	if err != nil {
 		return "", errors.Wrapf(err, "can't generate link payload for id:%#v,now:%v", id, now)
 	}

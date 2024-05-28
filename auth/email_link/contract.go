@@ -106,7 +106,6 @@ type (
 		} `yaml:"loginSession"`
 		EmailValidation struct {
 			AuthLink       string              `yaml:"authLink"`
-			JwtSecret      string              `yaml:"jwtSecret"`
 			ExpirationTime stdlibtime.Duration `yaml:"expirationTime" mapstructure:"expirationTime"`
 			BlockDuration  stdlibtime.Duration `yaml:"blockDuration"`
 		} `yaml:"emailValidation"`

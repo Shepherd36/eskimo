@@ -240,6 +240,18 @@ func (r *repositoryImpl) prepareUserForReset(ctx context.Context, userID UserID,
 }
 
 func (r *repositoryImpl) CheckQuizStatus(ctx context.Context, userID UserID) (*QuizStatus, error) { //nolint:funlen //.
+	if true {
+		return &QuizStatus{
+			KYCQuizAvailabilityStartedAt: time.Now(),
+			KYCQuizAvailabilityEndedAt:   time.Now(),
+			KYCQuizResetAt:               nil,
+			KYCQuizRemainingAttempts:     0,
+			KYCQuizAvailable:             false,
+			KYCQuizDisabled:              false,
+			KYCQuizCompleted:             false,
+			HasUnfinishedSessions:        false,
+		}, nil
+	}
 	status, err := r.getQuizStatus(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -298,6 +310,22 @@ func (r *readRepository) GetQuizStatus(ctx context.Context, userIDs ...string) (
 	// $5: max attempts allowed.
 	res := make(map[string]*QuizStatus, len(userIDs))
 	if len(userIDs) == 0 {
+		return res, nil
+	}
+	if true {
+		for _, userID := range userIDs {
+			res[userID] = &QuizStatus{
+				KYCQuizAvailabilityStartedAt: time.Now(),
+				KYCQuizAvailabilityEndedAt:   time.Now(),
+				KYCQuizResetAt:               nil,
+				KYCQuizRemainingAttempts:     0,
+				KYCQuizAvailable:             false,
+				KYCQuizDisabled:              false,
+				KYCQuizCompleted:             false,
+				HasUnfinishedSessions:        false,
+			}
+		}
+
 		return res, nil
 	}
 
@@ -903,7 +931,7 @@ func (r *repositoryImpl) modifyUser(ctx context.Context, success, blocked bool, 
 			usr.KYCStepPassed = &newKYCStep
 		}
 
-		if blocked {
+		if blocked && false {
 			usr.KYCStepBlocked = &newKYCStep
 		}
 	}

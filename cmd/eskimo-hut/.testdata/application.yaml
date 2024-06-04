@@ -76,8 +76,6 @@ users: &users
   wintr/multimedia/picture:
     urlUpload: https://storage.bunnycdn.com/ice-staging/profile
     urlDownload: https://ice-staging.b-cdn.net/profile
-  wintr/analytics/tracking:
-    baseUrl: https://api-02.moengage.com
   phoneNumberValidation:
     expirationTime: 30s
     smsTemplate: '{{.code}} is your ice verification code. This code expires in {{.expirationTime}} minutes.'

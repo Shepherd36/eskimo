@@ -19,7 +19,6 @@ import (
 	"github.com/pkg/errors"
 
 	devicemetadata "github.com/ice-blockchain/eskimo/users/internal/device/metadata"
-	"github.com/ice-blockchain/wintr/analytics/tracking"
 	appcfg "github.com/ice-blockchain/wintr/config"
 	messagebroker "github.com/ice-blockchain/wintr/connectors/message_broker"
 	storage "github.com/ice-blockchain/wintr/connectors/storage/v2"
@@ -58,7 +57,6 @@ func StartProcessor(ctx context.Context, cancel context.CancelFunc) Processor {
 		pictureClient:            picture.New(applicationYamlKey, defaultProfilePictureNameRegex),
 	}}
 	if !cfg.DisableConsumer {
-		prc.trackingClient = tracking.New(applicationYamlKey)
 		mbConsumer = messagebroker.MustConnectAndStartConsuming(context.Background(), cancel, applicationYamlKey, //nolint:contextcheck // It's intended.
 			&userSnapshotSource{processor: prc},
 			&miningSessionSource{processor: prc},

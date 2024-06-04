@@ -61,8 +61,3 @@ users:
   wintr/email:
     credentials:
       apiKey: # TODO: Change credentials.
-  wintr/analytics/tracking:
-    baseUrl: https://api-02.moengage.com
-    credentials:
-      appId: # TODO: Add credentials.
-      apiKey: # TODO: Add credentials.

@@ -28,7 +28,6 @@ func (s *userSnapshotSource) Process(ctx context.Context, msg *messagebroker.Mes
 		errors.Wrap(s.updateTotalUsersCount(ctx, usr), "failed to updateTotalUsersCount"),
 		errors.Wrap(s.updateTotalUsersPerCountryCount(ctx, usr), "failed to updateTotalUsersPerCountryCount"),
 		errors.Wrap(s.updateReferralCount(ctx, msg.Timestamp, usr), "failed to updateReferralCount"),
-		errors.Wrap(s.deleteUserTracking(ctx, usr), "failed to deleteUserTracking"),
 	).ErrorOrNil()
 }
 

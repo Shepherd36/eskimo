@@ -17,7 +17,6 @@ import (
 
 	"github.com/ice-blockchain/eskimo/users/internal/device"
 	devicemetadata "github.com/ice-blockchain/eskimo/users/internal/device/metadata"
-	"github.com/ice-blockchain/wintr/analytics/tracking"
 	messagebroker "github.com/ice-blockchain/wintr/connectors/message_broker"
 	storage "github.com/ice-blockchain/wintr/connectors/storage/v2"
 	"github.com/ice-blockchain/wintr/multimedia/picture"
@@ -285,9 +284,8 @@ type (
 		db  *storage.DB
 		mb  messagebroker.Client
 		devicemetadata.DeviceMetadataRepository
-		pictureClient  picture.Client
-		trackingClient tracking.Client
-		shutdown       func() error
+		pictureClient picture.Client
+		shutdown      func() error
 	}
 
 	processor struct {

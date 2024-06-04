@@ -159,11 +159,3 @@ func (r *repository) updateReferredByForAllT1Referrals(ctx context.Context, user
 
 	return errors.Wrap(multierror.Append(nil, errs...).ErrorOrNil(), "failed to update referred by for some/all of user's t1 referrals")
 }
-
-func (r *repository) deleteUserTracking(ctx context.Context, usr *UserSnapshot) error {
-	if usr.Before != nil && usr.User == nil {
-		return errors.Wrapf(r.trackingClient.DeleteUser(ctx, usr.Before.ID), "failed to delete tracking data for userID:%v", usr.Before.ID)
-	}
-
-	return nil
-}

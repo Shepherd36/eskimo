@@ -1,0 +1,3 @@
+{
+    "subject": "Din påloggings-e-post ble endret for {{.AppName}}"
+}

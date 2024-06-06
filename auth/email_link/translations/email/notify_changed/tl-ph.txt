@@ -1,0 +1,3 @@
+{
+    "subject": "Ang iyong sign-in email ay nabago para sa {{.AppName}}"
+}

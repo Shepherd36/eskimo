@@ -101,6 +101,9 @@ type (
 	config struct {
 		FromEmailName    string `yaml:"fromEmailName"`
 		FromEmailAddress string `yaml:"fromEmailAddress"`
+		PetName          string `yaml:"petName"`
+		AppName          string `yaml:"appName"`
+		TeamName         string `yaml:"teamName"`
 		LoginSession     struct {
 			JwtSecret string `yaml:"jwtSecret"`
 		} `yaml:"loginSession"`

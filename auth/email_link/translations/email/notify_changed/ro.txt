@@ -1,0 +1,3 @@
+{
+    "subject": "Emailul dvs. de conectare a fost schimbat pentru {{.AppName}}"
+}

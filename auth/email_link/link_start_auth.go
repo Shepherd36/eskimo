@@ -159,26 +159,38 @@ func (c *client) sendConfirmationCode(ctx context.Context, id *loginID, oldEmail
 	return errors.Wrapf(c.sendEmailWithType(ctx, emailType, id.Email, language, confirmationCode), "failed to send validation email for id:%#v", id)
 }
 
+//nolint:funlen // .
 func (c *client) sendEmailWithType(ctx context.Context, emailType, toEmail, language, confirmationCode string) error {
 	var tmpl *emailTemplate
 	tmpl, ok := allEmailLinkTemplates[emailType][language]
 	if !ok {
 		tmpl = allEmailLinkTemplates[emailType][defaultLanguage]
 	}
-	data := struct {
+	dataBody := struct {
 		Email            string
 		ConfirmationCode string
+		PetName          string
+		AppName          string
+		TeamName         string
 	}{
 		Email:            toEmail,
 		ConfirmationCode: confirmationCode,
+		PetName:          c.cfg.PetName,
+		AppName:          c.cfg.AppName,
+		TeamName:         c.cfg.TeamName,
+	}
+	dataSubject := struct {
+		AppName string
+	}{
+		AppName: c.cfg.AppName,
 	}
 
 	return errors.Wrapf(c.emailClient.Send(ctx, &email.Parcel{
 		Body: &email.Body{
 			Type: email.TextHTML,
-			Data: tmpl.getBody(data),
+			Data: tmpl.getBody(dataBody),
 		},
-		Subject: tmpl.getSubject(nil),
+		Subject: tmpl.getSubject(dataSubject),
 		From: email.Participant{
 			Name:  c.cfg.FromEmailName,
 			Email: c.cfg.FromEmailAddress,

@@ -1,0 +1,3 @@
+{
+    "subject": "Logga in på {{.AppName}}"
+}

@@ -1,0 +1,3 @@
+{
+    "subject": "I-imeyili yakho yokungena ishintshiwe ye-{{.AppName}}"
+}

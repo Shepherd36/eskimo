@@ -93,6 +93,9 @@ auth/email-link:
     jwtSecret: bogus
   confirmationCode:
     maxWrongAttemptsCount: 3
+  petName: Tenanter
+  appName: Tenant
+  teamName: Tenant
 users: &users
   kyc:
     kyc-step1-reset-url: https://localhost:443/v1w/face-auth/

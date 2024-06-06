@@ -1,0 +1,3 @@
+{
+    "subject": "Inicia sesión en {{.AppName}}"
+}

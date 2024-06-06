@@ -103,26 +103,38 @@ func (*client) resetFirebaseEmailModification(ctx context.Context, md *users.JSO
 	return nil
 }
 
+//nolint:funlen // .
 func (c *client) sendNotifyEmailChanged(ctx context.Context, notifyEmail, newEmail, link, language string) error {
 	var tmpl *emailTemplate
 	tmpl, ok := allEmailLinkTemplates[notifyEmailChangedType][language]
 	if !ok {
 		tmpl = allEmailLinkTemplates[notifyEmailChangedType][defaultLanguage]
 	}
-	data := struct {
+	dataBody := struct {
 		NewEmail string
 		Link     string
+		PetName  string
+		AppName  string
+		TeamName string
 	}{
 		NewEmail: newEmail,
 		Link:     link,
+		PetName:  c.cfg.PetName,
+		AppName:  c.cfg.AppName,
+		TeamName: c.cfg.TeamName,
+	}
+	dataSubject := struct {
+		AppName string
+	}{
+		AppName: c.cfg.AppName,
 	}
 
 	return errors.Wrapf(c.emailClient.Send(ctx, &email.Parcel{
 		Body: &email.Body{
 			Type: email.TextHTML,
-			Data: tmpl.getBody(data),
+			Data: tmpl.getBody(dataBody),
 		},
-		Subject: tmpl.getSubject(nil),
+		Subject: tmpl.getSubject(dataSubject),
 		From: email.Participant{
 			Name:  c.cfg.FromEmailName,
 			Email: c.cfg.FromEmailAddress,

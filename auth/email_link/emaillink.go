@@ -107,6 +107,15 @@ func (cfg *config) validate() {
 	if cfg.ConfirmationCode.MaxWrongAttemptsCount == 0 {
 		log.Panic("no max wrong attempts count provided for confirmation code")
 	}
+	if cfg.PetName == "" {
+		log.Panic("no pet name specified")
+	}
+	if cfg.AppName == "" {
+		log.Panic("no app name specified")
+	}
+	if cfg.TeamName == "" {
+		log.Panic("no team name specified")
+	}
 }
 
 func (t *emailTemplate) getSubject(data any) string {

@@ -1,0 +1,3 @@
+{
+    "subject": "Email masuk anda telah diubah untuk {{.AppName}}"
+}

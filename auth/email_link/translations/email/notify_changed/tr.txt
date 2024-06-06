@@ -1,0 +1,3 @@
+{
+    "subject": "{{.AppName}} için giriş e-postanız değiştirildi"
+}

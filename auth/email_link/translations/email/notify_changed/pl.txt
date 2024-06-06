@@ -1,0 +1,3 @@
+{
+    "subject": "Twój e-mail logowania został zmieniony dla {{.AppName}}"
+}

@@ -49,17 +49,17 @@ func (t *twitterVerifierImpl) VerifyPostLink(ctx context.Context, doc *goquery.D
 	return
 }
 
-func (t *twitterVerifierImpl) VerifyContent(ctx context.Context, oe *twitterOE, expectedText, expextedPostURL string) (err error) {
+func (t *twitterVerifierImpl) VerifyContent(ctx context.Context, oe *twitterOE, expectedText, expectedPostURL string) (err error) {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader([]byte(oe.HTML)))
 	if err != nil {
 		return multierror.Append(ErrInvalidPageContent, err)
 	}
 
-	if !t.VerifyText(doc, expectedText) {
+	if expectedText != "" && !t.VerifyText(doc, expectedText) {
 		return ErrTextNotFound
 	}
 
-	if expextedPostURL != "" && !t.VerifyPostLink(ctx, doc, expextedPostURL) {
+	if expectedPostURL != "" && !t.VerifyPostLink(ctx, doc, expectedPostURL) {
 		return ErrPostNotFound
 	}
 

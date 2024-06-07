@@ -128,8 +128,8 @@ func (t *threeDivi) CheckAndUpdateStatus(ctx context.Context, userID string) (ha
 	return hasFaceKYCResult, errors.Wrapf(t.users.ModifyUser(ctx, usr, nil), "failed to update user with face kyc result")
 }
 
-//nolint:funlen // .
-func (t *threeDivi) Reset(ctx context.Context, userID string) error {
+//nolint:funlen,revive // .
+func (t *threeDivi) Reset(ctx context.Context, userID string, fetchState bool) error {
 	bafApplicant, err := t.searchIn3DiviForApplicant(ctx, userID)
 	if err != nil {
 		if errors.Is(err, errFaceAuthNotStarted) {
@@ -157,6 +157,7 @@ func (t *threeDivi) Reset(ctx context.Context, userID string) error {
 		}).
 		AddQueryParam("caller", "eskimo-hut").
 		SetHeader("Authorization", fmt.Sprintf("Bearer %v", t.cfg.ThreeDiVi.BAFToken)).
+		SetHeader("X-Secret-Api-Token", t.cfg.ThreeDiVi.SecretAPIToken).
 		Delete(fmt.Sprintf("%v/publicapi/api/v2/private/Applicants/%v", t.cfg.ThreeDiVi.BAFHost, bafApplicant.ApplicantID)); err != nil {
 		return errors.Wrapf(err, "failed to delete face auth state for userID:%v", userID)
 	} else if statusCode := resp.GetStatusCode(); statusCode != http.StatusOK && statusCode != http.StatusNoContent {
@@ -164,9 +165,13 @@ func (t *threeDivi) Reset(ctx context.Context, userID string) error {
 	} else if _, err2 := resp.ToBytes(); err2 != nil {
 		return errors.Wrapf(err2, "failed to read body of delete face auth state request for userID:%v", userID)
 	} else { //nolint:revive // .
-		_, err = t.CheckAndUpdateStatus(ctx, userID)
+		if fetchState {
+			_, err = t.CheckAndUpdateStatus(ctx, userID)
 
-		return errors.Wrapf(err, "failed to check user's face auth state after reset for userID %v", userID)
+			return errors.Wrapf(err, "failed to check user's face auth state after reset for userID %v", userID)
+		}
+
+		return nil
 	}
 }
 

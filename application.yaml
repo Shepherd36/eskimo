@@ -65,6 +65,7 @@ kyc/face:
     bafToken: bogus
     bafHost: http://bogus.com/
     availabilityUrl:
+    secretApiToken: bogus-secret
     concurrentUsers: 1
 kyc/quiz:
   environment: local

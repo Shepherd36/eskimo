@@ -19,6 +19,7 @@ type (
 		ThreeDiVi struct {
 			BAFHost         string `yaml:"bafHost"`
 			BAFToken        string `yaml:"bafToken"`
+			SecretAPIToken  string `yaml:"secretApiToken"`
 			AvailabilityURL string `yaml:"availabilityUrl"`
 			ConcurrentUsers int    `yaml:"concurrentUsers"`
 		} `yaml:"threeDiVi"`

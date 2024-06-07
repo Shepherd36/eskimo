@@ -74,7 +74,7 @@ func (r *repository) resetKYCSteps(ctx context.Context, resetClient ResetKycClie
 func (r *repository) resetKYCStep(ctx context.Context, resetClient ResetKycClient, userID string, step KYCStep) error {
 	switch step { //nolint:exhaustive // Not needed yet.
 	case FacialRecognitionKYCStep:
-		if err := resetClient.Reset(ctx, userID); err != nil {
+		if err := resetClient.Reset(ctx, userID, true); err != nil {
 			return errors.Wrapf(err, "failed to resetFacialRecognitionKYCStep for userID:%v", userID)
 		}
 	default:

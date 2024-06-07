@@ -36,6 +36,6 @@ func (c *client) CheckStatus(ctx context.Context, userID string, nextKYCStep use
 	return kycFaceAvailable, nil
 }
 
-func (c *client) Reset(ctx context.Context, userID string) error {
-	return errors.Wrapf(c.client.Reset(ctx, userID), "failed to reset face auth state for userID %s", userID)
+func (c *client) Reset(ctx context.Context, userID string, fetchState bool) error {
+	return errors.Wrapf(c.client.Reset(ctx, userID, fetchState), "failed to reset face auth state for userID %s", userID)
 }

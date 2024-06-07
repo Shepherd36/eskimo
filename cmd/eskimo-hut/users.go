@@ -393,6 +393,9 @@ func (s *service) DeleteUser( //nolint:gocritic // False negative.
 	if err := server.Auth(ctx).DeleteUser(ctx, req.Data.UserID); err != nil && !errors.Is(err, auth.ErrUserNotFound) {
 		return nil, server.Unexpected(errors.Wrapf(err, "failed to delete auth user:%#v", req.Data.UserID))
 	}
+	if err := s.faceKycClient.Reset(ctx, req.Data.UserID, false); err != nil {
+		return nil, server.Unexpected(errors.Wrapf(err, "failed to delete users face:%#v", req.Data.UserID))
+	}
 
 	return server.OK[any](), nil
 }

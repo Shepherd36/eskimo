@@ -16,7 +16,7 @@ type (
 		ThreeDiVi threedivi.Config `mapstructure:",squash"` //nolint:tagliatelle // .
 	}
 	Client interface {
-		Reset(ctx context.Context, userID string) error
+		Reset(ctx context.Context, userID string, fetchState bool) error
 		CheckStatus(ctx context.Context, userID string, nextKYCStep users.KYCStep) (available bool, err error)
 	}
 )

@@ -13,7 +13,7 @@ type (
 	Client interface {
 		Available(ctx context.Context) error
 		CheckAndUpdateStatus(ctx context.Context, userID string) (hasFaceKYCResult bool, err error)
-		Reset(ctx context.Context, userID string) error
+		Reset(ctx context.Context, userID string, fetchState bool) error
 	}
 	UserRepository interface {
 		ModifyUser(ctx context.Context, usr *users.User, profilePicture *multipart.FileHeader) error

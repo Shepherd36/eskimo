@@ -68,7 +68,7 @@ func (s *service) startQuizSession(ctx context.Context, userID users.UserID, lan
 //	@Failure		422					{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
-//	@Router			/kyc/startOrContinueKYCStep4Session/users/{userId} [POST].
+//	@Router			/v1w/kyc/startOrContinueKYCStep4Session/users/{userId} [POST].
 func (s *service) StartOrContinueKYCStep4Session( //nolint:gocritic,funlen // .
 	ctx context.Context,
 	req *server.Request[StartOrContinueKYCStep4SessionRequestBody, kycquiz.Quiz],
@@ -142,7 +142,7 @@ func (s *service) StartOrContinueKYCStep4Session( //nolint:gocritic,funlen // .
 //	@Failure		422					{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
-//	@Router			/kyc/checkKYCStep4Status/users/{userId} [POST].
+//	@Router			/v1w/kyc/checkKYCStep4Status/users/{userId} [POST].
 func (s *service) CheckKYCStep4Status( //nolint:gocritic // .
 	ctx context.Context,
 	req *server.Request[CheckKYCStep4StatusRequestBody, kycquiz.QuizStatus],
@@ -181,7 +181,7 @@ func (s *service) CheckKYCStep4Status( //nolint:gocritic // .
 //	@Failure		422					{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
-//	@Router			/kyc/verifySocialKYCStep/users/{userId} [POST].
+//	@Router			/v1w/kyc/verifySocialKYCStep/users/{userId} [POST].
 func (s *service) VerifySocialKYCStep( //nolint:gocritic // .
 	ctx context.Context,
 	req *server.Request[kycsocial.VerificationMetadata, kycsocial.Verification],
@@ -253,7 +253,7 @@ func validateVerifySocialKYCStep(req *server.Request[kycsocial.VerificationMetad
 //	@Failure		422					{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
-//	@Router			/kyc/tryResetKYCSteps/users/{userId} [POST].
+//	@Router			/v1w/kyc/tryResetKYCSteps/users/{userId} [POST].
 func (s *service) TryResetKYCSteps( //nolint:gocritic,funlen,gocognit,revive,cyclop,gocyclo // .
 	ctx context.Context,
 	req *server.Request[TryResetKYCStepsRequestBody, User],

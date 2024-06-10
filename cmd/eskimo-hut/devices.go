@@ -39,7 +39,7 @@ func (s *service) setupDevicesRoutes(router *server.Router) {
 //	@Failure		422					{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
-//	@Router			/users/{userId}/devices/{deviceUniqueId}/metadata [PUT].
+//	@Router			/v1w/users/{userId}/devices/{deviceUniqueId}/metadata [PUT].
 func (s *service) ReplaceDeviceMetadata( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[ReplaceDeviceMetadataRequestBody, any],
@@ -85,7 +85,7 @@ func (s *service) ReplaceDeviceMetadata( //nolint:gocritic // False negative.
 //	@Failure		422					{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
-//	@Router			/users/{userId}/devices/{deviceUniqueId}/metadata/location [PUT].
+//	@Router			/v1w/users/{userId}/devices/{deviceUniqueId}/metadata/location [PUT].
 func (s *service) GetDeviceLocation( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[GetDeviceLocationArg, users.DeviceLocation],

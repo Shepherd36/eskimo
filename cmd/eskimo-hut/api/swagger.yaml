@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: ice License 1.0
 
-basePath: /v1w
 definitions:
   main.Auth:
     properties:
@@ -399,6 +398,107 @@ definitions:
         example: true
         type: boolean
     type: object
+  main.UserProfile:
+    properties:
+      agendaPhoneNumberHashes:
+        example: Ef86A6021afCDe5673511376B2,Ef86A6021afCDe5673511376B2,Ef86A6021afCDe5673511376B2,Ef86A6021afCDe5673511376B2
+        type: string
+      blockchainAccountAddress:
+        example: 0x4B73C58370AEfcEf86A6021afCDe5673511376B2
+        type: string
+      checksum:
+        example: "1232412415326543647657"
+        type: string
+      city:
+        example: New York
+        type: string
+      clientData:
+        $ref: '#/definitions/users.JSON'
+      country:
+        example: US
+        type: string
+      createdAt:
+        example: "2022-01-03T16:20:52.156534Z"
+        type: string
+      email:
+        example: jdoe@gmail.com
+        type: string
+      firstName:
+        example: John
+        type: string
+      hiddenProfileElements:
+        example:
+        - level
+        items:
+          enum:
+          - globalRank
+          - referralCount
+          - level
+          - role
+          - badges
+          type: string
+        type: array
+      id:
+        example: did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2
+        type: string
+      kycStepBlocked:
+        allOf:
+        - $ref: '#/definitions/users.KYCStep'
+        example: 0
+      kycStepPassed:
+        allOf:
+        - $ref: '#/definitions/users.KYCStep'
+        example: 0
+      kycStepsCreatedAt:
+        example:
+        - "2022-01-03T16:20:52.156534Z"
+        items:
+          type: string
+        type: array
+      kycStepsLastUpdatedAt:
+        example:
+        - "2022-01-03T16:20:52.156534Z"
+        items:
+          type: string
+        type: array
+      language:
+        example: en
+        type: string
+      lastName:
+        example: Doe
+        type: string
+      miningBlockchainAccountAddress:
+        example: 0x4B73C58370AEfcEf86A6021afCDe5673511376B2
+        type: string
+      phoneNumber:
+        example: "+12099216581"
+        type: string
+      profilePictureUrl:
+        example: https://somecdn.com/p1.jpg
+        type: string
+      referredBy:
+        example: did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2
+        type: string
+      repeatableKYCSteps:
+        additionalProperties:
+          type: string
+        type: object
+      t1ReferralCount:
+        example: 100
+        type: integer
+      t2ReferralCount:
+        example: 100
+        type: integer
+      updatedAt:
+        example: "2022-01-03T16:20:52.156534Z"
+        type: string
+      username:
+        example: jdoe
+        type: string
+      verified:
+        example: true
+        type: boolean
+    type: object
   quiz.Progress:
     properties:
       correctAnswers:
@@ -520,6 +620,16 @@ definitions:
     x-enum-varnames:
     - SuccessVerificationResult
     - FailureVerificationResult
+  users.CountryStatistics:
+    properties:
+      country:
+        description: ISO 3166 country code.
+        example: US
+        type: string
+      userCount:
+        example: 12121212
+        type: integer
+    type: object
   users.DeviceLocation:
     properties:
       city:
@@ -558,16 +668,537 @@ definitions:
     - Social5KYCStep
     - Social6KYCStep
     - Social7KYCStep
+  users.MinimalUserProfile:
+    properties:
+      active:
+        example: true
+        type: boolean
+      city:
+        example: New York
+        type: string
+      country:
+        example: US
+        type: string
+      email:
+        example: jdoe@gmail.com
+        type: string
+      id:
+        example: did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2
+        type: string
+      phoneNumber:
+        example: "+12099216581"
+        type: string
+      pinged:
+        example: false
+        type: boolean
+      profilePictureUrl:
+        example: https://somecdn.com/p1.jpg
+        type: string
+      referralType:
+        allOf:
+        - $ref: '#/definitions/users.ReferralType'
+        enum:
+        - CONTACTS
+        - T0
+        - T1
+        - T2
+        example: T1
+      username:
+        example: jdoe
+        type: string
+      verified:
+        example: true
+        type: boolean
+    type: object
+  users.ReferralAcquisition:
+    properties:
+      date:
+        example: "2022-01-03"
+        type: string
+      t1:
+        example: 22
+        type: integer
+      t2:
+        example: 13
+        type: integer
+    type: object
+  users.ReferralType:
+    enum:
+    - CONTACTS
+    - T1
+    - T2
+    - TEAM
+    type: string
+    x-enum-varnames:
+    - ContactsReferrals
+    - Tier1Referrals
+    - Tier2Referrals
+    - TeamReferrals
+  users.Referrals:
+    properties:
+      active:
+        example: 11
+        type: integer
+      referrals:
+        items:
+          $ref: '#/definitions/users.MinimalUserProfile'
+        type: array
+      total:
+        example: 11
+        type: integer
+    type: object
+  users.UserCountTimeSeriesDataPoint:
+    properties:
+      active:
+        example: 11
+        type: integer
+      date:
+        example: "2022-01-03T16:20:52.156534Z"
+        type: string
+      total:
+        example: 11
+        type: integer
+    type: object
+  users.UserGrowthStatistics:
+    properties:
+      active:
+        example: 11
+        type: integer
+      timeSeries:
+        items:
+          $ref: '#/definitions/users.UserCountTimeSeriesDataPoint'
+        type: array
+      total:
+        example: 11
+        type: integer
+    type: object
 info:
   contact:
     name: ice.io
     url: https://ice.io
-  description: API that handles everything related to write only operations for user's
-    account, user's devices and statistics about those.
+  description: API that handles everything related to user's account, user's devices
+    and statistics about those.
   title: User Accounts, User Devices, User Statistics API
   version: latest
 paths:
-  /auth/getMetadata:
+  /v1r/user-statistics/top-countries:
+    get:
+      consumes:
+      - application/json
+      description: Returns the paginated view of users per country.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - default: <Add metadata token here>
+        description: Insert your metadata token
+        in: header
+        name: X-Account-Metadata
+        type: string
+      - description: a keyword to look for in all country codes or names
+        in: query
+        name: keyword
+        type: string
+      - description: Limit of elements to return. Defaults to 10
+        in: query
+        name: limit
+        type: integer
+      - description: Number of elements to skip before collecting elements to return
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/users.CountryStatistics'
+            type: array
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Statistics
+  /v1r/user-statistics/user-growth:
+    get:
+      consumes:
+      - application/json
+      description: Returns statistics about user growth.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - default: <Add metadata token here>
+        description: Insert your metadata token
+        in: header
+        name: X-Account-Metadata
+        type: string
+      - description: number of days in the past to look for. Defaults to 3. Max is
+          90.
+        in: query
+        name: days
+        type: integer
+      - description: Timezone in format +04:30 or -03:45
+        in: query
+        name: tz
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.UserGrowthStatistics'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Statistics
+  /v1r/user-views/username:
+    get:
+      consumes:
+      - application/json
+      description: Returns public information about an user account based on an username,
+        making sure the username is valid first.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - default: <Add metadata token here>
+        description: Insert your metadata token
+        in: header
+        name: X-Account-Metadata
+        type: string
+      - description: username of the user. It will validate it first
+        in: query
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.UserProfile'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "404":
+          description: if not found
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Accounts
+  /v1r/users:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of user account based on the provided query parameters.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - default: <Add metadata token here>
+        description: Insert your metadata token
+        in: header
+        name: X-Account-Metadata
+        type: string
+      - description: A keyword to look for in the usernames
+        in: query
+        name: keyword
+        required: true
+        type: string
+      - description: Limit of elements to return. Defaults to 10
+        in: query
+        name: limit
+        type: integer
+      - description: Elements to skip before starting to look for
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/users.MinimalUserProfile'
+            type: array
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Accounts
+  /v1r/users/{userId}:
+    get:
+      consumes:
+      - application/json
+      description: Returns an user's account.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - default: <Add metadata token here>
+        description: Insert your metadata token
+        in: header
+        name: X-Account-Metadata
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.UserProfile'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "404":
+          description: if not found
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Accounts
+  /v1r/users/{userId}/referral-acquisition-history:
+    get:
+      consumes:
+      - application/json
+      description: Returns the history of referral acquisition for the provided user
+        id.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - default: <Add metadata token here>
+        description: Insert your metadata token
+        in: header
+        name: X-Account-Metadata
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: Always is 5, cannot be changed due to DB schema
+        in: query
+        name: days
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/users.ReferralAcquisition'
+            type: array
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Referrals
+  /v1r/users/{userId}/referrals:
+    get:
+      consumes:
+      - application/json
+      description: Returns the referrals of an user.
+      parameters:
+      - default: Bearer <Add access token here>
+        description: Insert your access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - default: <Add metadata token here>
+        description: Insert your metadata token
+        in: header
+        name: X-Account-Metadata
+        type: string
+      - description: ID of the user
+        in: path
+        name: userId
+        required: true
+        type: string
+      - description: 'Type of referrals: `CONTACTS` or `T1` or `T2`'
+        in: query
+        name: type
+        required: true
+        type: string
+      - description: Limit of elements to return. Defaults to 10
+        in: query
+        name: limit
+        type: integer
+      - description: Number of elements to skip before collecting elements to return
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.Referrals'
+        "400":
+          description: if validations fail
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: if not authorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: if not allowed
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "422":
+          description: if syntax fails
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "504":
+          description: if request times out
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      tags:
+      - Referrals
+  /v1w/auth/getMetadata:
     post:
       description: Fetches user's metadata based on token's data
       parameters:
@@ -598,7 +1229,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Auth
-  /auth/getValidUserForPhoneNumberMigration:
+  /v1w/auth/getValidUserForPhoneNumberMigration:
     post:
       consumes:
       - application/json
@@ -652,7 +1283,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Auth
-  /auth/processFaceRecognitionResult:
+  /v1w/auth/processFaceRecognitionResult:
     post:
       consumes:
       - application/json
@@ -713,7 +1344,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Auth
-  /auth/refreshTokens:
+  /v1w/auth/refreshTokens:
     post:
       consumes:
       - application/json
@@ -764,7 +1395,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Auth
-  /auth/sendSignInLinkToEmail:
+  /v1w/auth/sendSignInLinkToEmail:
     post:
       consumes:
       - application/json
@@ -820,7 +1451,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Auth
-  /auth/signInWithConfirmationCode:
+  /v1w/auth/signInWithConfirmationCode:
     post:
       description: Finishes login flow using confirmation code
       parameters:
@@ -859,7 +1490,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Auth
-  /kyc/checkKYCStep4Status/users/{userId}:
+  /v1w/kyc/checkKYCStep4Status/users/{userId}:
     post:
       consumes:
       - application/json
@@ -918,7 +1549,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - KYC
-  /kyc/startOrContinueKYCStep4Session/users/{userId}:
+  /v1w/kyc/startOrContinueKYCStep4Session/users/{userId}:
     post:
       consumes:
       - application/json
@@ -997,7 +1628,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - KYC
-  /kyc/tryResetKYCSteps/users/{userId}:
+  /v1w/kyc/tryResetKYCSteps/users/{userId}:
     post:
       consumes:
       - application/json
@@ -1064,7 +1695,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - KYC
-  /kyc/verifySocialKYCStep/users/{userId}:
+  /v1w/kyc/verifySocialKYCStep/users/{userId}:
     post:
       consumes:
       - application/json
@@ -1158,7 +1789,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - KYC
-  /users:
+  /v1w/users:
     post:
       consumes:
       - application/json
@@ -1223,7 +1854,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Accounts
-  /users/{userId}:
+  /v1w/users/{userId}:
     delete:
       consumes:
       - application/json
@@ -1426,7 +2057,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Accounts
-  /users/{userId}/devices/{deviceUniqueId}/metadata:
+  /v1w/users/{userId}/devices/{deviceUniqueId}/metadata:
     put:
       consumes:
       - application/json
@@ -1499,7 +2130,7 @@ paths:
             $ref: '#/definitions/server.ErrorResponse'
       tags:
       - Devices
-  /users/{userId}/devices/{deviceUniqueId}/metadata/location:
+  /v1w/users/{userId}/devices/{deviceUniqueId}/metadata/location:
     put:
       consumes:
       - application/json

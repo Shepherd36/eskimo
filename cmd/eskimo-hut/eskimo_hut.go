@@ -22,12 +22,11 @@ import (
 
 // @title						User Accounts, User Devices, User Statistics API
 // @version					latest
-// @description				API that handles everything related to write only operations for user's account, user's devices and statistics about those.
+// @description				API that handles everything related to user's account, user's devices and statistics about those.
 // @query.collection.format	multi
 // @schemes					https
 // @contact.name				ice.io
 // @contact.url				https://ice.io
-// @BasePath					/v1w
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -43,6 +42,7 @@ func main() {
 }
 
 func (s *service) RegisterRoutes(router *server.Router) {
+	s.registerEskimoRoutes(router)
 	s.setupKYCRoutes(router)
 	s.setupUserRoutes(router)
 	s.setupDevicesRoutes(router)

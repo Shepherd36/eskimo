@@ -47,7 +47,7 @@ func (s *service) setupUserRoutes(router *server.Router) {
 //	@Failure		422					{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
-//	@Router			/users [POST].
+//	@Router			/v1w/users [POST].
 func (s *service) CreateUser( //nolint:funlen,gocritic // .
 	ctx context.Context,
 	req *server.Request[CreateUserRequestBody, User],
@@ -136,7 +136,7 @@ func validateCreateUser(req *server.Request[CreateUserRequestBody, User]) *serve
 //	@Failure		422					{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
-//	@Router			/users/{userId} [PATCH].
+//	@Router			/v1w/users/{userId} [PATCH].
 func (s *service) ModifyUser( //nolint:gocritic,funlen,revive,cyclop // .
 	ctx context.Context,
 	req *server.Request[ModifyUserRequestBody, ModifyUserResponse],
@@ -373,7 +373,7 @@ func verifyPhoneNumberAndUsername(phoneNumber, phoneNumberHash, username string)
 //	@Failure		422					{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
-//	@Router			/users/{userId} [DELETE].
+//	@Router			/v1w/users/{userId} [DELETE].
 func (s *service) DeleteUser( //nolint:gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[DeleteUserArg, any],

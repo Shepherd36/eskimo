@@ -48,7 +48,7 @@ func (s *service) setupAuthRoutes(router *server.Router) {
 //	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/auth/sendSignInLinkToEmail [POST].
+//	@Router			/v1w/auth/sendSignInLinkToEmail [POST].
 func (s *service) SendSignInLinkToEmail( //nolint:gocritic,funlen // .
 	ctx context.Context,
 	req *server.Request[SendSignInLinkToEmailRequestArg, Auth],
@@ -97,7 +97,7 @@ func (s *service) SendSignInLinkToEmail( //nolint:gocritic,funlen // .
 //	@Failure		422		{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500		{object}	server.ErrorResponse
 //	@Failure		504		{object}	server.ErrorResponse	"if request times out"
-//	@Router			/auth/signInWithConfirmationCode [POST].
+//	@Router			/v1w/auth/signInWithConfirmationCode [POST].
 //
 //nolint:gocritic,funlen //.
 func (s *service) SignIn(
@@ -156,7 +156,7 @@ func (s *service) SignIn(
 //	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/auth/refreshTokens [POST].
+//	@Router			/v1w/auth/refreshTokens [POST].
 func (s *service) RegenerateTokens( //nolint:gocritic // .
 	ctx context.Context,
 	req *server.Request[RefreshToken, RefreshedToken],
@@ -192,7 +192,7 @@ func (s *service) RegenerateTokens( //nolint:gocritic // .
 //	@Failure		404				{object}	server.ErrorResponse	"if user do not have a metadata yet"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/auth/getMetadata [POST].
+//	@Router			/v1w/auth/getMetadata [POST].
 func (s *service) Metadata(
 	ctx context.Context,
 	req *server.Request[GetMetadataArg, Metadata],
@@ -345,7 +345,7 @@ func (s *service) updateMetadataWithFirebaseID(
 //	@Failure		422				{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500				{object}	server.ErrorResponse
 //	@Failure		504				{object}	server.ErrorResponse	"if request times out"
-//	@Router			/auth/processFaceRecognitionResult [POST].
+//	@Router			/v1w/auth/processFaceRecognitionResult [POST].
 func (s *service) ProcessFaceRecognitionResult(
 	ctx context.Context,
 	req *server.Request[ProcessFaceRecognitionResultArg, any],
@@ -435,7 +435,7 @@ func parseProcessFaceRecognitionResultRequest(req *server.Request[ProcessFaceRec
 //	@Failure		422			{object}	server.ErrorResponse	"if syntax fails"
 //	@Failure		500			{object}	server.ErrorResponse
 //	@Failure		504			{object}	server.ErrorResponse	"if request times out"
-//	@Router			/auth/getValidUserForPhoneNumberMigration [POST].
+//	@Router			/v1w/auth/getValidUserForPhoneNumberMigration [POST].
 func (s *service) GetValidUserForPhoneNumberMigration( //nolint:funlen,revive // .
 	ctx context.Context,
 	req *server.Request[GetValidUserForPhoneNumberMigrationArg, User],

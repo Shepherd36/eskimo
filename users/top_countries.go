@@ -70,6 +70,10 @@ func (r *repository) updateTotalUsersPerCountryCount(ctx context.Context, usr *U
 			return errors.Wrap(ctx.Err(), "context failed")
 		}
 	}
+	countryChanged := usr.User != nil && usr.User.ID != "" && usr.Before != nil && usr.Before.ID != "" && usr.User.Country != usr.Before.Country
+	if !countryChanged {
+		return nil
+	}
 	nextIndex := 1
 	values := make([]string, 0, 1+1)
 	params := make([]any, 0, 1+1)

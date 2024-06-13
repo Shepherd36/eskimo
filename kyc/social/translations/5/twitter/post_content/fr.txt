@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE est répertorié sur #KuCoin !
-
-📈 $ICE/USDT - Ouverture des échanges à 09h00 UTC le 28 février
-
-🙌 Rejoignez #Ice en utilisant mon code de parrainage "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

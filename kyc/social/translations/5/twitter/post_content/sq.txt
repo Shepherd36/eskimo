@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE renditet në #KuCoin!
-
-📈 $ICE/USDT - Tregtimi i hapur në 09:00 UTC 28 shkurt
-
-🙌 Bashkohuni me #Ice duke përdorur kodin tim të referimit "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

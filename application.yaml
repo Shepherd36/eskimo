@@ -60,6 +60,7 @@ kyc/social:
         - US
     facebook:
       allow-long-live-tokens: true
+  tenant-name: sunwaves
 kyc/face:
   threeDiVi:
     bafToken: bogus

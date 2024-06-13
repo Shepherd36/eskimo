@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE 已在 #KuCoin 上市！
-
-📈 $ICE/USDT - 交易於 2 月 28 日世界標準時間上午 09:00 開放
-
-🙌 使用我的推薦代碼"{{.Username}}"加入 #Ice
-
-#IceNetwork #DecentralizedFuture

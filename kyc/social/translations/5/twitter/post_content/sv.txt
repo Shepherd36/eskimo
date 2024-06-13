@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE listas på #KuCoin!
-
-📈 $ICE/USDT - Handeln öppnar 09:00 UTC 28 februari
-
-🙌 Gå med i #Ice med min referenskod "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

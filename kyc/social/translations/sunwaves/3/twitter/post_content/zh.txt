@@ -1,0 +1,5 @@
+✅ 使用昵称在 @sunwaves_token 上验证我的账户: "{{.Username}}".
+
+👉 在 @ice_blockchain 上将节日提升到下一个层次的 #ION 生态系统.
+
+#SUNWAVES $SW $ICE

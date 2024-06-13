@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE 가 #KuCoin 에 상장되었습니다!
-
-📈 $ICE/USDT - 2월 28일 오전 9시(UTC)에 거래 개시
-
-🙌 내 추천 코드 "{{.Username}}"을(를) 사용하여 #Ice 에 가입하세요
-
-#IceNetwork #DecentralizedFuture

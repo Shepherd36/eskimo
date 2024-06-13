@@ -38,9 +38,9 @@ var (
 
 var (
 	//nolint:gochecknoglobals // Its loaded once at startup.
-	AllTypes = []Type{FacebookType, TwitterType}
+	AllTypes = []Type{TwitterType}
 	//nolint:gochecknoglobals // Its loaded once at startup.
-	AllSupportedKYCSteps = []users.KYCStep{users.Social1KYCStep, users.Social2KYCStep, users.Social3KYCStep, users.Social4KYCStep, users.Social5KYCStep, users.Social6KYCStep, users.Social7KYCStep} //nolint:lll // .
+	AllSupportedKYCSteps = []users.KYCStep{users.Social1KYCStep, users.Social2KYCStep}
 )
 
 type (
@@ -101,11 +101,12 @@ var (
 	//nolint:gochecknoglobals // Its loaded once at startup.
 	allLanguageTemplateType = [1]languageTemplateType{postContentLanguageTemplateType}
 	//nolint:gochecknoglobals // Its loaded once at startup.
-	allTemplates = make(map[users.KYCStep]map[Type]map[languageTemplateType]map[languageCode]*languageTemplate, len(AllSupportedKYCSteps))
+	allTemplates = make(map[tenantName]map[users.KYCStep]map[Type]map[languageTemplateType]map[languageCode]*languageTemplate, len(AllSupportedKYCSteps))
 )
 
 type (
 	languageTemplateType string
+	tenantName           string
 	languageCode         = string
 	languageTemplate     struct {
 		content *template.Template
@@ -137,6 +138,7 @@ type (
 		ConfigJSONURL        string              `yaml:"config-json-url" mapstructure:"config-json-url"` //nolint:tagliatelle // .
 		Environment          string              `yaml:"environment" mapstructure:"environment"`
 		AlertSlackWebhook    string              `yaml:"alert-slack-webhook" mapstructure:"alert-slack-webhook"`       //nolint:tagliatelle // .
+		TenantName           string              `yaml:"tenant-name" mapstructure:"tenant-name"`                       //nolint:tagliatelle // .
 		DelayBetweenSessions stdlibtime.Duration `yaml:"delay-between-sessions" mapstructure:"delay-between-sessions"` //nolint:tagliatelle // .
 		SessionWindow        stdlibtime.Duration `yaml:"session-window" mapstructure:"session-window"`                 //nolint:tagliatelle // .
 		MaxSessionsAllowed   int                 `yaml:"max-sessions-allowed" mapstructure:"max-sessions-allowed"`     //nolint:tagliatelle // .

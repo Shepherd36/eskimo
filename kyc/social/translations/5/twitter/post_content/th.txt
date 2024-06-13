@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE ได้รับการจดทะเบียนบน #KuCoin!
-
-📈 $ICE/USDT - เปิดการซื้อขายเวลา 09:00AM UTC 28 ก.พ
-
-🙌 เข้าร่วม #Ice โดยใช้รหัสอ้างอิงของฉัน "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

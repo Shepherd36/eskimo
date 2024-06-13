@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE viene quotato su #KuCoin!
-
-📈 $ICE/USDT - Trading aperto alle 09:00 UTC del 28 febbraio
-
-🙌 Unisciti a #Ice utilizzando il mio codice referral "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

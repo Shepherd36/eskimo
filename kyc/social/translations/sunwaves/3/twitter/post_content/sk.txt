@@ -1,0 +1,5 @@
+✅ Overujem svoj účet na @sunwaves_token s prezývkou: "{{.Username}}".
+
+👉 Prinášame festivaly na ďalšiu úroveň v ekosystéme #ION s @ice_blockchain.
+
+#SUNWAVES $SW $ICE

@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE נרשם ב-#KuCoin!
-
-📈 $ICE/USDT - המסחר נפתח בשעה 09:00 UTC 28 בפברואר
-
-🙌 הצטרף ל-#Ice באמצעות קוד ההפניה שלי "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

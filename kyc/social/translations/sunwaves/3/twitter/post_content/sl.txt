@@ -1,0 +1,5 @@
+✅ Preverjam svoj račun na @sunwaves_token z vzdevkom: "{{.Username}}".
+
+👉 Dvigovanje festivalov na naslednjo raven v ekosistemu #ION z @ice_blockchain.
+
+#SUNWAVES $SW $ICE

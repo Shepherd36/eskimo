@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE #KuCoin 'de listeleniyor!
-
-📈 $ICE/USDT - İşlemler 28 Şubat 09:00 UTC'de açılıyor
-
-🙌 "{{.Username}}" yönlendirme kodumu kullanarak #Ice 'a katılın
-
-#IceNetwork #DecentralizedFuture

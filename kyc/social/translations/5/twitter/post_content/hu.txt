@@ -1,7 +1,0 @@
-🌟 @ice_blockchain A $ICE felkerül a #KuCoin listára!
-
-📈 $ICE/USDT – Kereskedés nyit: 09:00 UTC február 28.
-
-🙌 Csatlakozz az #Ice-hez a "{{.Username}}" ajánlókódommal
-
-#IceNetwork #DecentralizedFuture

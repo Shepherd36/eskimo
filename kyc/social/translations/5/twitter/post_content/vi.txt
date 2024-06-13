@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE được liệt kê trên #KuCoin!
-
-📈 $ICE/USDT - Giao dịch mở vào 09:00 sáng UTC ngày 28 tháng 2
-
-🙌 Tham gia #Ice bằng mã giới thiệu của tôi "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

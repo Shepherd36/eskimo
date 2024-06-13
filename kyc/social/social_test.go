@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ice-blockchain/eskimo/users"
@@ -49,4 +50,23 @@ func TestSocialSave(t *testing.T) {
 	})
 
 	require.NoError(t, db.Close())
+}
+
+func TestFixTranslationParameters(t *testing.T) {
+	t.Parallel()
+
+	orig := "The quick {{brown.}} fox jumps over the lazy dog"
+	assert.Equal(t, "The quick {{.brown}} fox jumps over the lazy dog", fixTemplateParameters(orig))
+
+	orig = "The quick {{brown.}} fox jumps over the {{lazy.}} dog"
+	assert.Equal(t, "The quick {{.brown}} fox jumps over the {{.lazy}} dog", fixTemplateParameters(orig))
+
+	orig = "The quick {{brown.}} fox {{.jumps}} over the {{lazy.}} dog"
+	assert.Equal(t, "The quick {{.brown}} fox {{.jumps}} over the {{.lazy}} dog", fixTemplateParameters(orig))
+
+	orig = "The quick {{.brown}} fox jumps over the {{.lazy}} dog"
+	assert.Equal(t, "The quick {{.brown}} fox jumps over the {{.lazy}} dog", fixTemplateParameters(orig))
+
+	orig = "The quick brown fox jumps over the lazy dog"
+	assert.Equal(t, "The quick brown fox jumps over the lazy dog", fixTemplateParameters(orig))
 }

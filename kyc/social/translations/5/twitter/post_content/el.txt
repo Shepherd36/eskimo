@@ -1,7 +1,0 @@
-🌟 Το @ice_blockchain $ICE εμφανίζεται στο #KuCoin!
-
-📈 $ICE/USDT - Άνοιγμα συναλλαγών στις 09:00 π.μ. UTC 28 Φεβρουαρίου
-
-🙌 Εγγραφείτε στο #Ice χρησιμοποιώντας τον κωδικό παραπομπής μου "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

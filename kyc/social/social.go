@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"text/template"
@@ -27,29 +28,38 @@ func init() {
 	loadTranslations()
 }
 
-func loadTranslations() { //nolint:gocognit,revive // .
-	for _, kycStep := range AllSupportedKYCSteps {
-		for _, socialType := range AllTypes {
-			for _, templateType := range allLanguageTemplateType {
-				files, err := translations.ReadDir(fmt.Sprintf("translations/%v/%v/%v", kycStep, socialType, templateType))
-				log.Panic(err) //nolint:revive // Nope.
-				for _, file := range files {
-					content, fErr := translations.ReadFile(fmt.Sprintf("translations/%v/%v/%v/%v", kycStep, socialType, templateType, file.Name()))
-					log.Panic(fErr) //nolint:revive // Nope.
-					language := strings.Split(file.Name(), ".")[0]
-					templName := fmt.Sprintf("translations_%v_%v_%v_%v", kycStep, socialType, templateType, language)
-					tmpl := languageTemplate{Content: string(content)}
-					tmpl.content = template.Must(template.New(templName).Parse(tmpl.Content))
-					if _, found := allTemplates[kycStep]; !found {
-						allTemplates[kycStep] = make(map[Type]map[languageTemplateType]map[languageCode]*languageTemplate, len(AllTypes))
+func loadTranslations() { //nolint:funlen,gocognit,revive // .
+	tenantDirs, err := translations.ReadDir("translations")
+	log.Panic(err) //nolint:revive // Nope.
+
+	for _, tenantFile := range tenantDirs {
+		for _, kycStep := range AllSupportedKYCSteps {
+			for _, socialType := range AllTypes {
+				for _, templateType := range allLanguageTemplateType {
+					files, rErr := translations.ReadDir(fmt.Sprintf("translations/%v/%v/%v/%v", tenantFile.Name(), kycStep, socialType, templateType))
+					log.Panic(rErr) //nolint:revive // Nope.
+					for _, file := range files {
+						content, fErr := translations.ReadFile(fmt.Sprintf("translations/%v/%v/%v/%v/%v", tenantFile.Name(), kycStep, socialType, templateType, file.Name()))
+						log.Panic(fErr) //nolint:revive // Nope.
+						language := strings.Split(file.Name(), ".")[0]
+						templName := fmt.Sprintf("translations_%v_%v_%v_%v_%v", tenantFile.Name(), kycStep, socialType, templateType, language)
+						tmpl := languageTemplate{Content: fixTemplateParameters(string(content))}
+						tmpl.content = template.Must(template.New(templName).Parse(tmpl.Content))
+
+						if _, found := allTemplates[tenantName(tenantFile.Name())]; !found {
+							allTemplates[tenantName(tenantFile.Name())] = make(map[users.KYCStep]map[social.StrategyType]map[languageTemplateType]map[string]*languageTemplate)
+						}
+						if _, found := allTemplates[tenantName(tenantFile.Name())][kycStep]; !found {
+							allTemplates[tenantName(tenantFile.Name())][kycStep] = make(map[Type]map[languageTemplateType]map[languageCode]*languageTemplate, len(AllTypes))
+						}
+						if _, found := allTemplates[tenantName(tenantFile.Name())][kycStep][socialType]; !found {
+							allTemplates[tenantName(tenantFile.Name())][kycStep][socialType] = make(map[languageTemplateType]map[languageCode]*languageTemplate, len(&allLanguageTemplateType)) //nolint:lll // .
+						}
+						if _, found := allTemplates[tenantName(tenantFile.Name())][kycStep][socialType][templateType]; !found {
+							allTemplates[tenantName(tenantFile.Name())][kycStep][socialType][templateType] = make(map[languageCode]*languageTemplate, len(files))
+						}
+						allTemplates[tenantName(tenantFile.Name())][kycStep][socialType][templateType][language] = &tmpl
 					}
-					if _, found := allTemplates[kycStep][socialType]; !found {
-						allTemplates[kycStep][socialType] = make(map[languageTemplateType]map[languageCode]*languageTemplate, len(&allLanguageTemplateType))
-					}
-					if _, found := allTemplates[kycStep][socialType][templateType]; !found {
-						allTemplates[kycStep][socialType][templateType] = make(map[languageCode]*languageTemplate, len(files))
-					}
-					allTemplates[kycStep][socialType][templateType][language] = &tmpl
 				}
 			}
 		}
@@ -170,12 +180,12 @@ func (r *repository) VerifyPost(ctx context.Context, metadata *VerificationMetad
 		return nil, ErrNotAvailable
 	}
 	if metadata.Twitter.TweetURL == "" && metadata.Facebook.AccessToken == "" {
-		return &Verification{ExpectedPostText: metadata.expectedPostText(user.User)}, nil
+		return &Verification{ExpectedPostText: metadata.expectedPostText(user.User, tenantName(r.cfg.TenantName))}, nil
 	}
 	pvm := &social.Metadata{
 		AccessToken:      metadata.Facebook.AccessToken,
 		PostURL:          metadata.Twitter.TweetURL,
-		ExpectedPostText: metadata.expectedPostText(user.User),
+		ExpectedPostText: metadata.expectedPostText(user.User, tenantName(r.cfg.TenantName)),
 		ExpectedPostURL:  r.expectedPostURL(metadata),
 	}
 	if true { // Because we want to be less strict, for the moment.
@@ -365,12 +375,12 @@ func detectReason(err error) string {
 	}
 }
 
-func (vm *VerificationMetadata) expectedPostText(user *users.User) string {
+func (vm *VerificationMetadata) expectedPostText(user *users.User, tname tenantName) string {
 	var templ *languageTemplate
-	if val, found := allTemplates[vm.KYCStep][vm.Social][postContentLanguageTemplateType][vm.Language]; found {
+	if val, found := allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType][vm.Language]; found {
 		templ = val
 	} else {
-		templ = allTemplates[vm.KYCStep][vm.Social][postContentLanguageTemplateType]["en"]
+		templ = allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType]["en"]
 	}
 	bf := new(bytes.Buffer)
 	log.Panic(errors.Wrapf(templ.content.Execute(bf, user), "failed to execute postContentLanguageTemplateType template for data:%#v", user))
@@ -402,4 +412,19 @@ func (r *repository) expectedPostURL(metadata *VerificationMetadata) (url string
 	}
 
 	return url
+}
+
+func fixTemplateParameters(orig string) string {
+	result := orig
+	re := regexp.MustCompile(`{{[^{}]*}}`)
+	newStrs := re.FindAllString(result, -1)
+	for _, s := range newStrs {
+		if strings.HasSuffix(s, ".}}") {
+			textWithoutBrackets := s[0 : len(s)-3]
+			textWithoutBrackets = textWithoutBrackets[2:]
+			result = strings.ReplaceAll(result, s, fmt.Sprintf("{{.%v}}", textWithoutBrackets))
+		}
+	}
+
+	return result
 }

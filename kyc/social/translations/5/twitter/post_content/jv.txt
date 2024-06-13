@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE kadhaptar ing #KuCoin!
-
-📈 $ICE/USDT - Dagang Bukak ing 09:00 UTC 28 Feb
-
-🙌 Gabung #Ice nggunakake kode referralku "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

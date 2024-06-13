@@ -1,7 +1,0 @@
-🌟 @ice_blockchain $ICE é listado no #KuCoin!
-
-📈 $ICE/USDT - Negociação aberta às 09:00 UTC de 28 de fevereiro
-
-🙌 Junte-se ao #Ice usando meu código de referência "{{.Username}}"
-
-#IceNetwork #DecentralizedFuture

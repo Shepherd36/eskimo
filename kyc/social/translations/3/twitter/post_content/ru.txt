@@ -1,5 +1,0 @@
-✅ Подтверждаю аккаунт на @ice_blockchain с никнеймом: "{{.Username}}"
-
-👉 Узнайте больше о "Децентрализованном будущем", которое строит #IceNetwork. 👇
-
-#Binance #HTX #KuCoin #OKX #Bybit #Gateio #Upbit #Crypto #Blockchain #Web3 #Altcoin #Bitcoin #Ethereum #BNB

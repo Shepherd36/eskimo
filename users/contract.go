@@ -203,7 +203,7 @@ type (
 	WriteRepository interface {
 		CreateUser(ctx context.Context, usr *User, clientIP net.IP) error
 		DeleteUser(ctx context.Context, userID UserID) error
-		ModifyUser(ctx context.Context, usr *User, profilePicture *multipart.FileHeader) error
+		ModifyUser(ctx context.Context, usr *User, profilePicture *multipart.FileHeader) (*UserProfile, error)
 
 		TryResetKYCSteps(ctx context.Context, resetClient ResetKycClient, userID string) (*User, error)
 	}

@@ -13,16 +13,20 @@ import (
 	"github.com/ice-blockchain/wintr/time"
 )
 
-func (r *repository) getUserByID(ctx context.Context, id UserID) (*User, error) {
+func (r *repository) getUserByID(ctx context.Context, id UserID) (*UserProfile, error) {
 	if ctx.Err() != nil {
 		return nil, errors.Wrap(ctx.Err(), "get user failed because context failed")
 	}
-	result, err := storage.Get[User](ctx, r.db, `
+	result, err := storage.Get[UserProfile](ctx, r.db, `
 	SELECT users.*,
-	       qs.user_id IS NOT NULL AND qs.ended_at is not null AND qs.ended_successfully = true AS quiz_completed
+	       qs.user_id IS NOT NULL AND qs.ended_at is not null AND qs.ended_successfully = true AS quiz_completed,
+	       COALESCE(refs.t1, 0) 	  as t1_referral_count,
+		   COALESCE(refs.t2, 0)		  as t2_referral_count
 		FROM users
 		LEFT JOIN quiz_sessions qs
 			ON qs.user_id = users.id
+		LEFT JOIN referral_acquisition_history refs
+			ON refs.user_id = users.id
 		WHERE id = $1`, id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get user by id %v", id)
@@ -69,10 +73,12 @@ func (r *repository) getOtherUserByID(ctx context.Context, userID string) (*User
 		return nil, err
 	}
 	verified := usr.IsVerified()
-	*usr = User{
-		HiddenProfileElements: usr.HiddenProfileElements,
-		PublicUserInformation: usr.PublicUserInformation,
-		Verified:              &verified,
+	*usr = UserProfile{
+		User: &User{
+			HiddenProfileElements: usr.HiddenProfileElements,
+			PublicUserInformation: usr.PublicUserInformation,
+			Verified:              &verified,
+		},
 	}
 	referralCountNeeded := true
 	if usr.HiddenProfileElements != nil {
@@ -86,7 +92,7 @@ func (r *repository) getOtherUserByID(ctx context.Context, userID string) (*User
 	}
 	if !referralCountNeeded {
 		resp := new(UserProfile)
-		resp.User = r.sanitizeUser(usr)
+		resp.User = r.sanitizeUser(usr.User)
 
 		return resp, nil
 	}
@@ -110,7 +116,7 @@ func (r *repository) getOtherUserByID(ctx context.Context, userID string) (*User
 	resp := new(UserProfile)
 	resp.T1ReferralCount = &dbRes.T1ReferralCount
 	resp.T2ReferralCount = &dbRes.T2ReferralCount
-	resp.User = r.sanitizeUser(usr)
+	resp.User = r.sanitizeUser(usr.User)
 
 	return resp, nil
 }

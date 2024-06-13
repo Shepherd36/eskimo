@@ -361,7 +361,7 @@ func (s *service) ProcessFaceRecognitionResult(
 
 		return nil, server.UnprocessableEntity(err, invalidPropertiesErrorCode)
 	}
-	if err = s.usersProcessor.ModifyUser(ctx, usr, nil); err != nil {
+	if _, err = s.usersProcessor.ModifyUser(ctx, usr, nil); err != nil {
 		err = errors.Wrapf(err, "failed to UpdateFaceRecognitionResult for %#v", usr)
 		switch {
 		case errors.Is(err, users.ErrNotFound):

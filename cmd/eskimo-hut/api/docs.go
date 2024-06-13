@@ -2256,34 +2256,6 @@ const docTemplate = `{
                     "type": "string",
                     "example": "did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"
                 },
-                "kycFaceAvailable": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "kycQuizAvailabilityEndedAt": {
-                    "type": "string"
-                },
-                "kycQuizAvailabilityStartedAt": {
-                    "type": "string"
-                },
-                "kycQuizAvailable": {
-                    "type": "boolean"
-                },
-                "kycQuizCompleted": {
-                    "type": "boolean"
-                },
-                "kycQuizDisabled": {
-                    "type": "boolean"
-                },
-                "kycQuizRemainingAttempts": {
-                    "type": "integer"
-                },
-                "kycQuizResetAt": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
                 "kycStepBlocked": {
                     "allOf": [
                         {
@@ -2351,6 +2323,14 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "string"
                     }
+                },
+                "t1ReferralCount": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "t2ReferralCount": {
+                    "type": "integer",
+                    "example": 100
                 },
                 "updatedAt": {
                     "type": "string",

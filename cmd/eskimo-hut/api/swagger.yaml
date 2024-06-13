@@ -102,25 +102,6 @@ definitions:
       id:
         example: did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2
         type: string
-      kycFaceAvailable:
-        example: true
-        type: boolean
-      kycQuizAvailabilityEndedAt:
-        type: string
-      kycQuizAvailabilityStartedAt:
-        type: string
-      kycQuizAvailable:
-        type: boolean
-      kycQuizCompleted:
-        type: boolean
-      kycQuizDisabled:
-        type: boolean
-      kycQuizRemainingAttempts:
-        type: integer
-      kycQuizResetAt:
-        items:
-          type: string
-        type: array
       kycStepBlocked:
         allOf:
         - $ref: '#/definitions/users.KYCStep'
@@ -166,6 +147,12 @@ definitions:
         additionalProperties:
           type: string
         type: object
+      t1ReferralCount:
+        example: 100
+        type: integer
+      t2ReferralCount:
+        example: 100
+        type: integer
       updatedAt:
         example: "2022-01-03T16:20:52.156534Z"
         type: string

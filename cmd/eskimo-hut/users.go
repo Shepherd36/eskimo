@@ -161,7 +161,8 @@ func (s *service) ModifyUser( //nolint:gocritic,funlen,revive,cyclop // .
 			return nil, server.Unexpected(errors.Wrapf(err, "failed to trigger email modification for request:%#v", req.Data))
 		}
 	}
-	err = s.usersProcessor.ModifyUser(users.ContextWithChecksum(ctx, req.Data.Checksum), usr, req.Data.ProfilePicture)
+	var userProfile *users.UserProfile
+	userProfile, err = s.usersProcessor.ModifyUser(users.ContextWithChecksum(ctx, req.Data.Checksum), usr, req.Data.ProfilePicture)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to modify user for %#v", req.Data)
 		switch {
@@ -184,7 +185,7 @@ func (s *service) ModifyUser( //nolint:gocritic,funlen,revive,cyclop // .
 		}
 	}
 
-	return server.OK(&ModifyUserResponse{User: &User{User: usr, Checksum: usr.Checksum()}, LoginSession: loginSession}), nil
+	return server.OK(&ModifyUserResponse{UserProfile: &UserProfile{UserProfile: userProfile, Checksum: usr.Checksum()}, LoginSession: loginSession}), nil
 }
 
 func validateModifyUser(ctx context.Context, req *server.Request[ModifyUserRequestBody, ModifyUserResponse]) *server.Response[server.ErrorResponse] {

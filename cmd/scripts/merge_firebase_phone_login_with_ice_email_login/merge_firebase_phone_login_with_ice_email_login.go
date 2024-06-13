@@ -101,7 +101,7 @@ func updateDBEmail(usersProcessor users.Processor, usr *record, idx uint64) {
 			},
 		},
 	}
-	err := usersProcessor.ModifyUser(context.Background(), &updUsr, nil)
+	_, err := usersProcessor.ModifyUser(context.Background(), &updUsr, nil)
 	if errors.Is(err, users.ErrDuplicate) { //nolint:revive // Nope.
 		log.Error(errors.Errorf("duplicate email(belongs to another user): id:%v, email:%v", usr.ID, usr.Email))
 	} else {

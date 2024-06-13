@@ -941,8 +941,9 @@ func (r *repositoryImpl) modifyUser(ctx context.Context, success, blocked bool, 
 		*usr.KYCStepsLastUpdatedAt = append(*usr.KYCStepsLastUpdatedAt, now)
 	}
 	(*usr.KYCStepsLastUpdatedAt)[int(newKYCStep)-1] = now
+	_, mErr := r.Users.ModifyUser(ctx, usr, nil)
 
-	return errors.Wrapf(r.Users.ModifyUser(ctx, usr, nil), "failed to modify user %#v", usr)
+	return errors.Wrapf(mErr, "failed to modify user %#v", usr)
 }
 
 func (r *repositoryImpl) ContinueQuizSession( //nolint:funlen,revive,gocognit //.

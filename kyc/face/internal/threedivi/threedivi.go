@@ -124,8 +124,9 @@ func (t *threeDivi) CheckAndUpdateStatus(ctx context.Context, userID string) (ha
 	usr := t.parseApplicant(userID, bafApplicant)
 	hasFaceKYCResult = (usr.KYCStepPassed != nil && *usr.KYCStepPassed >= users.LivenessDetectionKYCStep) ||
 		(usr.KYCStepBlocked != nil && *usr.KYCStepBlocked > users.NoneKYCStep)
+	_, mErr := t.users.ModifyUser(ctx, usr, nil)
 
-	return hasFaceKYCResult, errors.Wrapf(t.users.ModifyUser(ctx, usr, nil), "failed to update user with face kyc result")
+	return hasFaceKYCResult, errors.Wrapf(mErr, "failed to update user with face kyc result")
 }
 
 //nolint:funlen,revive // .

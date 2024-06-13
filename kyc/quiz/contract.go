@@ -43,7 +43,7 @@ type (
 
 	UserRepository interface {
 		GetUserByID(ctx context.Context, userID string) (*users.UserProfile, error)
-		ModifyUser(ctx context.Context, usr *users.User, profilePicture *multipart.FileHeader) error
+		ModifyUser(ctx context.Context, usr *users.User, profilePicture *multipart.FileHeader) (*users.UserProfile, error)
 	}
 	QuizStatus struct { //nolint:revive // Nope cuz we want to be able to embed this
 		KYCQuizAvailabilityStartedAt *time.Time   `json:"kycQuizAvailabilityStartedAt" db:"kyc_quiz_availability_started_at"`

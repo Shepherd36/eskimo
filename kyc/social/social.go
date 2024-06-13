@@ -275,7 +275,6 @@ func (r *repository) modifyUser(ctx context.Context, success, skip bool, kycStep
 	usr := new(users.User)
 	usr.ID = user.ID
 	usr.KYCStepsLastUpdatedAt = user.KYCStepsLastUpdatedAt
-
 	switch {
 	case success:
 		usr.KYCStepPassed = &kycStep
@@ -300,8 +299,9 @@ func (r *repository) modifyUser(ctx context.Context, success, skip bool, kycStep
 			(*usr.KYCStepsLastUpdatedAt)[int(kycStep)-1] = now
 		}
 	}
+	_, mErr := r.user.ModifyUser(ctx, usr, nil)
 
-	return errors.Wrapf(r.user.ModifyUser(ctx, usr, nil), "[skip:%v]failed to modify user %#v", skip, usr)
+	return errors.Wrapf(mErr, "[skip:%v]failed to modify user %#v", skip, usr)
 }
 
 func (r *repository) saveSocialKYCStep(ctx context.Context, now *time.Time, userHandle string, metadata *VerificationMetadata) error {

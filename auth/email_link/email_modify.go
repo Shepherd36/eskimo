@@ -21,7 +21,7 @@ func (c *client) handleEmailModification(ctx context.Context, els *emailLinkSign
 	usr := new(users.User)
 	usr.ID = *els.UserID
 	usr.Email = newEmail
-	err := c.userModifier.ModifyUser(users.ConfirmedEmailContext(ctx, newEmail), usr, nil)
+	_, err := c.userModifier.ModifyUser(users.ConfirmedEmailContext(ctx, newEmail), usr, nil)
 	if err != nil {
 		return errors.Wrapf(err, "failed to modify user %v with email modification", els.UserID)
 	}
@@ -85,9 +85,9 @@ func (c *client) resetEmailModification(ctx context.Context, userID users.UserID
 	usr := new(users.User)
 	usr.ID = userID
 	usr.Email = oldEmail
+	_, mErr := c.userModifier.ModifyUser(users.ConfirmedEmailContext(ctx, oldEmail), usr, nil)
 
-	return errors.Wrapf(c.userModifier.ModifyUser(users.ConfirmedEmailContext(ctx, oldEmail), usr, nil),
-		"[rollback] failed to modify user:%v", userID)
+	return errors.Wrapf(mErr, "[rollback] failed to modify user:%v", userID)
 }
 
 func (*client) resetFirebaseEmailModification(ctx context.Context, md *users.JSON, oldEmail string) error {

@@ -17,30 +17,30 @@ import (
 )
 
 //nolint:funlen,gocognit,gocyclo,revive,cyclop // It needs a better breakdown.
-func (r *repository) ModifyUser(ctx context.Context, usr *User, profilePicture *multipart.FileHeader) error {
+func (r *repository) ModifyUser(ctx context.Context, usr *User, profilePicture *multipart.FileHeader) (*UserProfile, error) {
 	if ctx.Err() != nil {
-		return errors.Wrap(ctx.Err(), "update user failed because context failed")
+		return nil, errors.Wrap(ctx.Err(), "update user failed because context failed")
 	}
 	oldUsr, err := r.getUserByID(ctx, usr.ID)
 	if err != nil {
-		return errors.Wrapf(err, "get user %v failed", usr.ID)
+		return nil, errors.Wrapf(err, "get user %v failed", usr.ID)
 	}
 	notRandom := (usr.RandomReferredBy == nil || !*usr.RandomReferredBy)
 	if oldUsr.ReferredBy != "" && oldUsr.ReferredBy != oldUsr.ID && usr.ReferredBy != "" && usr.ReferredBy != oldUsr.ReferredBy && notRandom {
-		return errors.Errorf("changing the referredBy a second time is not allowed")
+		return nil, errors.Errorf("changing the referredBy a second time is not allowed")
 	}
 	if false {
 		if oldUsr.MiningBlockchainAccountAddress != "" && oldUsr.MiningBlockchainAccountAddress != oldUsr.ID &&
 			usr.MiningBlockchainAccountAddress != "" && usr.MiningBlockchainAccountAddress != oldUsr.MiningBlockchainAccountAddress {
-			return errors.Errorf("changing the miningBlockchainAccountAddress a second time is not allowed")
+			return nil, errors.Errorf("changing the miningBlockchainAccountAddress a second time is not allowed")
 		}
 	}
 	lu := lastUpdatedAt(ctx)
 	if lu != nil && oldUsr.UpdatedAt.UnixNano() != lu.UnixNano() {
-		return ErrRaceCondition
+		return nil, ErrRaceCondition
 	}
 	if usr.Country != "" && !r.IsValid(usr.Country) {
-		return ErrInvalidCountry
+		return nil, ErrInvalidCountry
 	}
 	if usr.Language != "" && oldUsr.Language == usr.Language {
 		usr.Language = ""
@@ -58,12 +58,12 @@ func (r *repository) ModifyUser(ctx context.Context, usr *User, profilePicture *
 		}
 		usr.ProfilePictureURL = profilePicture.Filename
 		if err = r.pictureClient.UploadPicture(ctx, profilePicture, oldUsr.ProfilePictureURL); err != nil {
-			return errors.Wrapf(err, "failed to upload profile picture for userID:%v", usr.ID)
+			return nil, errors.Wrapf(err, "failed to upload profile picture for userID:%v", usr.ID)
 		}
 	}
 	agendaBefore, agendaContactIDsForUpdate, uniqueAgendaContactIDsForSend, err := r.findAgendaContactIDs(ctx, usr)
 	if err != nil {
-		return errors.Wrapf(err, "can't find agenda contact ids for user:%v", usr.ID)
+		return nil, errors.Wrapf(err, "can't find agenda contact ids for user:%v", usr.ID)
 	}
 	sql, params := usr.genSQLUpdate(ctx, agendaContactIDsForUpdate)
 	noOpNoOfParams := 1 + 1
@@ -71,18 +71,22 @@ func (r *repository) ModifyUser(ctx context.Context, usr *User, profilePicture *
 		noOpNoOfParams++
 	}
 	if len(params) == noOpNoOfParams {
-		*usr = *r.sanitizeUser(oldUsr)
+		*usr = *r.sanitizeUser(oldUsr.User)
 		r.sanitizeUserForUI(usr)
 
-		return nil
+		return &UserProfile{
+			User:            usr,
+			T1ReferralCount: oldUsr.T1ReferralCount,
+			T2ReferralCount: oldUsr.T2ReferralCount,
+		}, nil
 	}
 	if updatedRowsCount, tErr := storage.Exec(ctx, r.db, sql, params...); tErr != nil || updatedRowsCount == 0 {
 		_, tErr = detectAndParseDuplicateDatabaseError(tErr)
 		if tErr == nil && updatedRowsCount == 0 {
-			return ErrRaceCondition
+			return nil, ErrRaceCondition
 		}
 
-		return errors.Wrapf(tErr, "failed to update user %#v", usr)
+		return nil, errors.Wrapf(tErr, "failed to update user %#v", usr)
 	}
 	bkpUsr := *oldUsr
 	if profilePicture != nil {
@@ -93,16 +97,16 @@ func (r *repository) ModifyUser(ctx context.Context, usr *User, profilePicture *
 		rollBackParams[1] = bkpUsr.UpdatedAt.Time
 		_, rErr := storage.Exec(ctx, r.db, rollbackSQL, rollBackParams...)
 
-		return errors.Wrapf(multierror.Append(rErr, sErr).ErrorOrNil(), "can't send contacts message for userID:%v", usr.ID)
+		return nil, errors.Wrapf(multierror.Append(rErr, sErr).ErrorOrNil(), "can't send contacts message for userID:%v", usr.ID)
 	}
 
-	us := &UserSnapshot{User: r.sanitizeUser(oldUsr.override(usr)), Before: r.sanitizeUser(oldUsr)}
+	us := &UserSnapshot{User: r.sanitizeUser(oldUsr.override(usr)), Before: r.sanitizeUser(oldUsr.User)}
 	if err = r.sendUserSnapshotMessage(ctx, us); err != nil {
 		rollbackSQL, rollBackParams := bkpUsr.genSQLUpdate(ctx, agendaBefore)
 		rollBackParams[1] = bkpUsr.UpdatedAt.Time
 		_, rollbackErr := storage.Exec(ctx, r.db, rollbackSQL, rollBackParams...)
 
-		return multierror.Append( //nolint:wrapcheck // Not needed.
+		return nil, multierror.Append( //nolint:wrapcheck // Not needed.
 			errors.Wrapf(err, "failed to send updated user snapshot message %#v", us),
 			errors.Wrapf(rollbackErr, "failed to replace user to previous value, due to rollback, prev:%#v", bkpUsr),
 		).ErrorOrNil()
@@ -110,7 +114,11 @@ func (r *repository) ModifyUser(ctx context.Context, usr *User, profilePicture *
 	*usr = *us.User
 	r.sanitizeUserForUI(usr)
 
-	return nil
+	return &UserProfile{
+		User:            usr,
+		T1ReferralCount: oldUsr.T1ReferralCount,
+		T2ReferralCount: oldUsr.T2ReferralCount,
+	}, nil
 }
 
 func (u *User) override(user *User) *User {

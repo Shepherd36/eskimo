@@ -24,7 +24,7 @@ import (
 
 type (
 	UserModifier interface {
-		ModifyUser(ctx context.Context, usr *users.User, profilePicture *multipart.FileHeader) error
+		ModifyUser(ctx context.Context, usr *users.User, profilePicture *multipart.FileHeader) (*users.UserProfile, error)
 	}
 	Client interface {
 		IceUserIDClient

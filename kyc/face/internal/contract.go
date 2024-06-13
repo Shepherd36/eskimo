@@ -16,6 +16,6 @@ type (
 		Reset(ctx context.Context, userID string, fetchState bool) error
 	}
 	UserRepository interface {
-		ModifyUser(ctx context.Context, usr *users.User, profilePicture *multipart.FileHeader) error
+		ModifyUser(ctx context.Context, usr *users.User, profilePicture *multipart.FileHeader) (*users.UserProfile, error)
 	}
 )

@@ -48,7 +48,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_step_blocked smallint NOT NULL DE
 ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_steps_last_updated_at timestamp[];
 ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_steps_created_at timestamp[];
 INSERT INTO users (created_at,updated_at,phone_number,phone_number_hash,email,id,username,profile_picture_name,referred_by,city,country,mining_blockchain_account_address,blockchain_account_address, lookup)
-                         VALUES (current_timestamp,current_timestamp,'bogus','bogus','bogus','bogus','bogus','bogus.jpg','bogus','bogus','RO','bogus','bogus',to_tsvector('bogus')),
+                         VALUES (current_timestamp,current_timestamp,'%[1]v','%[1]v','%[1]v','%[1]v','%[1]v','%[1]v.jpg','%[1]v','%[1]v','RO','%[1]v','%[1]v',to_tsvector('%[1]v')),
                                 (current_timestamp,current_timestamp,'icenetwork','icenetwork','icenetwork','icenetwork','icenetwork','icenetwork.jpg','icenetwork','icenetwork','RO','icenetwork','icenetwork',to_tsvector('icenetwork'))
 ON CONFLICT DO NOTHING;
 CREATE INDEX IF NOT EXISTS users_referred_by_ix ON users (referred_by);

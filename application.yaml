@@ -99,6 +99,7 @@ auth/email-link:
   appName: Tenant
   teamName: Tenant
 users: &users
+  defaultReferralName: bogus
   kyc:
     kyc-step1-reset-url: https://localhost:443/v1w/face-auth/
   disableConsumer: false

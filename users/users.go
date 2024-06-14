@@ -31,7 +31,8 @@ func New(ctx context.Context, _ context.CancelFunc) Repository {
 	var cfg config
 	appcfg.MustLoadFromKey(applicationYamlKey, &cfg)
 
-	db := storage.MustConnect(ctx, ddl, applicationYamlKey)
+	ddlWithParams := fmt.Sprintf(ddl, cfg.DefaultReferralName)
+	db := storage.MustConnect(ctx, ddlWithParams, applicationYamlKey)
 
 	return &repository{
 		cfg:                      &cfg,
@@ -47,7 +48,8 @@ func StartProcessor(ctx context.Context, cancel context.CancelFunc) Processor {
 	appcfg.MustLoadFromKey(applicationYamlKey, &cfg)
 
 	var mbConsumer messagebroker.Client
-	db := storage.MustConnect(ctx, ddl, applicationYamlKey)
+	ddlWithParams := fmt.Sprintf(ddl, cfg.DefaultReferralName)
+	db := storage.MustConnect(ctx, ddlWithParams, applicationYamlKey)
 	mbProducer := messagebroker.MustConnect(ctx, applicationYamlKey)
 	prc := &processor{repository: &repository{
 		cfg:                      &cfg,

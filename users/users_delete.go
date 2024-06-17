@@ -98,6 +98,7 @@ func (r *repository) updateReferredByForAllT1Referrals(ctx context.Context, user
 	WITH randomized AS (
 		SELECT id, referred_by, created_at, hash_code FROM users
 		WHERE id != '%[1]v'
+			  AND id != 'bogus'
 			  AND id != 'icenetwork'
 			  AND username != id 
 			  AND referred_by != id 

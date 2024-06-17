@@ -280,7 +280,7 @@ func (r *repository) validateKycStep(user *users.User, kycStep users.KYCStep, no
 	return nil
 }
 
-//nolint:revive // Nope.
+//nolint:revive,funlen // Nope.
 func (r *repository) modifyUser(ctx context.Context, success, skip bool, kycStep users.KYCStep, now *time.Time, user *users.User) error {
 	usr := new(users.User)
 	usr.ID = user.ID
@@ -293,7 +293,11 @@ func (r *repository) modifyUser(ctx context.Context, success, skip bool, kycStep
 		} else {
 			(*usr.KYCStepsLastUpdatedAt)[int(kycStep)-1] = now
 		}
-		if kycStep == users.Social1KYCStep && !skip {
+		// This is just a hack so that we can differentiate between a failed/skipped Social 2 and a successful one:
+		// Social2KYCStep is a failed/skipped Social 2 outcome
+		// Social3KYCStep is a completed Social 2 outcome
+		// And, in actuality, there is no Social 3.
+		if (kycStep == users.Social1KYCStep || kycStep == users.Social2KYCStep) && !skip {
 			nextStep := kycStep + 1
 			usr.KYCStepPassed = &nextStep
 			if len(*usr.KYCStepsLastUpdatedAt) < int(nextStep) {

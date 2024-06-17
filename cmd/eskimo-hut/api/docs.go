@@ -1759,6 +1759,11 @@ const docTemplate = `{
                         "in": "formData"
                     },
                     {
+                        "type": "boolean",
+                        "name": "clearTelegramInfo",
+                        "in": "formData"
+                    },
+                    {
                         "type": "string",
                         "description": "Optional. Example: ` + "`" + `{\"key1\":{\"something\":\"somethingElse\"},\"key2\":\"value\"}` + "`" + `.",
                         "name": "clientData",
@@ -1838,6 +1843,16 @@ const docTemplate = `{
                         "type": "boolean",
                         "description": "Optional. Example:` + "`" + `true` + "`" + `.",
                         "name": "resetProfilePicture",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "name": "telegramBotId",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "name": "telegramUserId",
                         "in": "formData"
                     },
                     {
@@ -2332,6 +2347,14 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 100
                 },
+                "telegramBotId": {
+                    "type": "string",
+                    "example": "5678"
+                },
+                "telegramUserId": {
+                    "type": "string",
+                    "example": "1234"
+                },
                 "updatedAt": {
                     "type": "string",
                     "example": "2022-01-03T16:20:52.156534Z"
@@ -2656,6 +2679,14 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "telegramBotId": {
+                    "type": "string",
+                    "example": "5678"
+                },
+                "telegramUserId": {
+                    "type": "string",
+                    "example": "1234"
+                },
                 "updatedAt": {
                     "type": "string",
                     "example": "2022-01-03T16:20:52.156534Z"
@@ -2799,6 +2830,14 @@ const docTemplate = `{
                 "t2ReferralCount": {
                     "type": "integer",
                     "example": 100
+                },
+                "telegramBotId": {
+                    "type": "string",
+                    "example": "5678"
+                },
+                "telegramUserId": {
+                    "type": "string",
+                    "example": "1234"
                 },
                 "updatedAt": {
                     "type": "string",

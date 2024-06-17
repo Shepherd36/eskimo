@@ -770,6 +770,14 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 100
                 },
+                "telegramBotId": {
+                    "type": "string",
+                    "example": "5678"
+                },
+                "telegramUserId": {
+                    "type": "string",
+                    "example": "1234"
+                },
                 "updatedAt": {
                     "type": "string",
                     "example": "2022-01-03T16:20:52.156534Z"
@@ -1119,6 +1127,14 @@ const docTemplate = `{
                 "t2ReferralCount": {
                     "type": "integer",
                     "example": 100
+                },
+                "telegramBotId": {
+                    "type": "string",
+                    "example": "5678"
+                },
+                "telegramUserId": {
+                    "type": "string",
+                    "example": "1234"
                 },
                 "updatedAt": {
                     "type": "string",

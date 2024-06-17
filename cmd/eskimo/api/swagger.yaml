@@ -93,6 +93,12 @@ definitions:
       t2ReferralCount:
         example: 100
         type: integer
+      telegramBotId:
+        example: "5678"
+        type: string
+      telegramUserId:
+        example: "1234"
+        type: string
       updatedAt:
         example: "2022-01-03T16:20:52.156534Z"
         type: string
@@ -346,6 +352,12 @@ definitions:
       t2ReferralCount:
         example: 100
         type: integer
+      telegramBotId:
+        example: "5678"
+        type: string
+      telegramUserId:
+        example: "1234"
+        type: string
       updatedAt:
         example: "2022-01-03T16:20:52.156534Z"
         type: string

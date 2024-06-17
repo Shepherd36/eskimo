@@ -60,6 +60,7 @@ type (
 		HiddenProfileElements               *users.Enum[users.HiddenProfileElement] `form:"hiddenProfileElements" formMultipart:"hiddenProfileElements" swaggertype:"array,string" enums:"globalRank,referralCount,level,role,badges"` //nolint:lll // .
 		ClearHiddenProfileElements          *bool                                   `form:"clearHiddenProfileElements" formMultipart:"clearHiddenProfileElements"`
 		ClearMiningBlockchainAccountAddress *bool                                   `form:"clearMiningBlockchainAccountAddress" formMultipart:"clearMiningBlockchainAccountAddress"` //nolint:lll //.
+		ClearTelegramInfo                   *bool                                   `form:"clearTelegramInfo" formMultipart:"clearTelegramInfo"`                                     //nolint:lll //.
 		// Optional. Example: `{"key1":{"something":"somethingElse"},"key2":"value"}`.
 		ClientData *string     `form:"clientData" formMultipart:"clientData"`
 		clientData *users.JSON //nolint:revive // It's meant for internal use only.
@@ -89,7 +90,9 @@ type (
 		BlockchainAccountAddress       string `form:"blockchainAccountAddress" formMultipart:"blockchainAccountAddress"`
 		MiningBlockchainAccountAddress string `form:"miningBlockchainAccountAddress" formMultipart:"miningBlockchainAccountAddress"`
 		// Optional. Example:`en`.
-		Language string `form:"language" formMultipart:"language"`
+		Language       string `form:"language" formMultipart:"language"`
+		TelegramUserID string `form:"telegramUserId" formMultipart:"telegramUserId"`
+		TelegramBotID  string `form:"telegramBotId" formMultipart:"telegramBotId"`
 		// Optional. Example:`1232412415326543647657`.
 		Checksum string `form:"checksum" formMultipart:"checksum"`
 	}

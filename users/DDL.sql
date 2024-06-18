@@ -54,10 +54,10 @@ UPDATE users SET telegram_user_id = id WHERE telegram_user_id IS NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_bot_id text;
 UPDATE users SET telegram_bot_id = id WHERE telegram_bot_id IS NULL;
 ALTER TABLE users ALTER COLUMN telegram_bot_id SET NOT NULL;
-INSERT INTO users (created_at,updated_at,phone_number,phone_number_hash,email,id,username,profile_picture_name,referred_by,city,country,mining_blockchain_account_address,blockchain_account_address, telegram_user_id, lookup)
-                         VALUES (current_timestamp,current_timestamp,'bogus','bogus','bogus','bogus','bogus','bogus.jpg','bogus','bogus','RO','bogus','bogus','bogus',to_tsvector('bogus')),
-                                (current_timestamp,current_timestamp,'%[1]v','%[1]v','%[1]v','%[1]v','%[1]v','%[1]v.jpg','%[1]v','%[1]v','RO','%[1]v','%[1]v','%[1]v',to_tsvector('%[1]v')),
-                                (current_timestamp,current_timestamp,'icenetwork','icenetwork','icenetwork','icenetwork','icenetwork','icenetwork.jpg','icenetwork','icenetwork','RO','icenetwork','icenetwork','icenetwork',to_tsvector('icenetwork'))
+INSERT INTO users (created_at,updated_at,phone_number,phone_number_hash,email,id,username,profile_picture_name,referred_by,city,country,mining_blockchain_account_address,blockchain_account_address, telegram_user_id, telegram_bot_id, lookup)
+                         VALUES (current_timestamp,current_timestamp,'bogus','bogus','bogus','bogus','bogus','bogus.jpg','bogus','bogus','RO','bogus','bogus','bogus','bogus',to_tsvector('bogus')),
+                                (current_timestamp,current_timestamp,'%[1]v','%[1]v','%[1]v','%[1]v','%[1]v','%[1]v.jpg','%[1]v','%[1]v','RO','%[1]v','%[1]v','%[1]v','%[1]v',to_tsvector('%[1]v')),
+                                (current_timestamp,current_timestamp,'icenetwork','icenetwork','icenetwork','icenetwork','icenetwork','icenetwork.jpg','icenetwork','icenetwork','RO','icenetwork','icenetwork','icenetwork','icenetwork',to_tsvector('icenetwork'))
 ON CONFLICT DO NOTHING;
 CREATE INDEX IF NOT EXISTS users_referred_by_ix ON users (referred_by);
 CREATE EXTENSION IF NOT EXISTS btree_gin;

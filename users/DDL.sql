@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users  (
                     email text NOT NULL UNIQUE,
                     first_name text,
                     last_name text,
-                    telegram_bot_id text,
+                    telegram_bot_id text NOT NULL,
                     country text NOT NULL,
                     city text NOT NULL,
                     id text primary key,
@@ -50,7 +50,10 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_step_blocked smallint NOT NULL DE
 ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_steps_last_updated_at timestamp[];
 ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_steps_created_at timestamp[];
 ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_user_id text;
+UPDATE users SET telegram_user_id = id WHERE telegram_user_id IS NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_bot_id text;
+UPDATE users SET telegram_bot_id = id WHERE telegram_bot_id IS NULL;
+ALTER TABLE users ALTER COLUMN telegram_bot_id SET NOT NULL;
 INSERT INTO users (created_at,updated_at,phone_number,phone_number_hash,email,id,username,profile_picture_name,referred_by,city,country,mining_blockchain_account_address,blockchain_account_address, telegram_user_id, lookup)
                          VALUES (current_timestamp,current_timestamp,'bogus','bogus','bogus','bogus','bogus','bogus.jpg','bogus','bogus','RO','bogus','bogus','bogus',to_tsvector('bogus')),
                                 (current_timestamp,current_timestamp,'%[1]v','%[1]v','%[1]v','%[1]v','%[1]v','%[1]v.jpg','%[1]v','%[1]v','RO','%[1]v','%[1]v','%[1]v',to_tsvector('%[1]v')),

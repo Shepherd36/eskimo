@@ -112,9 +112,13 @@ func (r *repository) updateReferredByForAllT1Referrals(ctx context.Context, user
 									SELECT r.id
 									FROM randomized r											
 									WHERE r.id != u.id
-										  AND r.referred_by != u.id
-										  AND r.created_at < u.created_at
-										  AND MOD(r.hash_code, (floor(random()*1000)+1)::bigint) = 0
+										AND r.referred_by != u.id
+										AND r.created_at < u.created_at
+										AND MOD(r.hash_code,(floor(random()*COALESCE(
+															(SELECT 
+																CASE WHEN (SELECT value FROM global WHERE key='TOTAL_USERS')>1000 THEN 1000
+																ELSE 5 
+															END),5))+1)::bigint)=0
 									LIMIT 1
 							) X
 		

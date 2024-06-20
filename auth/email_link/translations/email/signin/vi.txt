@@ -1,3 +1,3 @@
 {
-    "subject": "Đăng nhập vào {{.AppName}}"
+    "subject": "Mã xác nhận của bạn"
 }

@@ -1,3 +1,3 @@
 {
-    "subject": "Masuk ke {{.AppName}}"
+    "subject": "Kode konfirmasi Anda"
 }

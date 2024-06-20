@@ -10,7 +10,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/ice-blockchain/go-tarantool-client v0.0.0-20230327200757-4fc71fa3f7bb
-	github.com/ice-blockchain/wintr v1.141.0
+	github.com/ice-blockchain/wintr v1.142.0
 	github.com/imroc/req/v3 v3.43.7
 	github.com/ip2location/ip2location-go/v9 v9.7.0
 	github.com/jackc/pgx/v5 v5.6.0

@@ -1,3 +1,3 @@
 {
-    "subject": "Logg inn på {{.AppName}}"
+    "subject": "Din bekreftelseskode"
 }

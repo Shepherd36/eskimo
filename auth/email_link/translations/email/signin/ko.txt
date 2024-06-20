@@ -1,3 +1,3 @@
 {
-    "subject": "{{.AppName}}에 로그인"
+    "subject": "귀하의 확인 코드"
 }

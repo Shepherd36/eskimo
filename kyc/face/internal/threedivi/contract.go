@@ -50,7 +50,7 @@ type (
 const (
 	requestDeadline               = 30 * stdlibtime.Second
 	metricOpenConnections         = "stunner_listener_connections"
-	connsPerUser                  = 6
+	connsPerUser                  = 2
 	metricOpenConnectionsLabelTCP = "default/tcp-gateway/tcp-listener"
 	statusPassed                  = 1
 	statusFailed                  = 2

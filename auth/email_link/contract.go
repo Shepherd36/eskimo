@@ -91,12 +91,14 @@ const (
 type (
 	languageCode = string
 	client       struct {
-		db           *storage.DB
-		cfg          *config
-		shutdown     func() error
-		emailClient  email.Client
-		authClient   auth.Client
-		userModifier UserModifier
+		db                 *storage.DB
+		cfg                *config
+		shutdown           func() error
+		authClient         auth.Client
+		userModifier       UserModifier
+		emailClients       []email.Client
+		fromRecipients     []fromRecipient
+		emailClientLBIndex uint64
 	}
 	config struct {
 		FromEmailName    string `yaml:"fromEmailName"`
@@ -115,7 +117,8 @@ type (
 		ConfirmationCode struct {
 			MaxWrongAttemptsCount int64 `yaml:"maxWrongAttemptsCount"`
 		} `yaml:"confirmationCode"`
-		DisableEmailSending bool `yaml:"disableEmailSending"`
+		DisableEmailSending     bool `yaml:"disableEmailSending"`
+		ExtraLoadBalancersCount int  `yaml:"extraLoadBalancersCount"`
 	}
 	loginID struct {
 		Email          string `json:"email,omitempty" example:"someone1@example.com"`
@@ -155,6 +158,10 @@ type (
 		Metadata *users.JSON
 		Email    *string
 		UserID   *string
+	}
+	fromRecipient struct {
+		FromEmailName    string
+		FromEmailAddress string
 	}
 )
 

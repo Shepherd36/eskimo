@@ -5,6 +5,7 @@ package emaillinkiceauth
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -128,16 +129,17 @@ func (c *client) sendNotifyEmailChanged(ctx context.Context, notifyEmail, newEma
 	}{
 		AppName: c.cfg.AppName,
 	}
+	lbIdx := atomic.AddUint64(&c.emailClientLBIndex, 1) % uint64(c.cfg.ExtraLoadBalancersCount+1)
 
-	return errors.Wrapf(c.emailClient.Send(ctx, &email.Parcel{
+	return errors.Wrapf(c.emailClients[lbIdx].Send(ctx, &email.Parcel{
 		Body: &email.Body{
 			Type: email.TextHTML,
 			Data: tmpl.getBody(dataBody),
 		},
 		Subject: tmpl.getSubject(dataSubject),
 		From: email.Participant{
-			Name:  c.cfg.FromEmailName,
-			Email: c.cfg.FromEmailAddress,
+			Name:  c.fromRecipients[lbIdx].FromEmailName,
+			Email: c.fromRecipients[lbIdx].FromEmailAddress,
 		},
 	}, email.Participant{
 		Name:  "",

@@ -82,6 +82,7 @@ kyc/quiz:
   availabilityWindowSeconds: 600
   globalStartDate: '2024-02-03T16:20:52.156534Z'
 auth/email-link:
+  extraLoadBalancersCount: 2
   wintr/connectors/storage/v2: *db
   fromEmailAddress: no-reply@ice.io
   fromEmailName: ice
@@ -98,6 +99,18 @@ auth/email-link:
   petName: Tenanter
   appName: Tenant
   teamName: Tenant
+auth/email-link/1:
+  fromEmailAddress: no-reply111@ice.io
+  fromEmailName: ice111
+  wintr/email:
+    credentials:
+      #apiKey: bogus1
+auth/email-link/2:
+  fromEmailAddress: no-reply222@ice.io
+  fromEmailName: ice222
+  wintr/email:
+    credentials:
+      #apiKey: bogus2
 users: &users
   defaultReferralName: bogus
   kyc:

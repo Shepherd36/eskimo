@@ -35,14 +35,23 @@ func NewClient(ctx context.Context, userModifier UserModifier, authClient auth.C
 	db := storage.MustConnect(ctx, ddl, applicationYamlKey)
 
 	cl := &client{
-		cfg:          cfg,
-		shutdown:     db.Close,
-		db:           db,
-		authClient:   authClient,
-		userModifier: userModifier,
+		cfg:            cfg,
+		shutdown:       db.Close,
+		db:             db,
+		authClient:     authClient,
+		userModifier:   userModifier,
+		emailClients:   make([]email.Client, 0, cfg.ExtraLoadBalancersCount+1),
+		fromRecipients: make([]fromRecipient, 0, cfg.ExtraLoadBalancersCount+1),
 	}
 	if !cfg.DisableEmailSending {
-		cl.emailClient = email.New(applicationYamlKey)
+		cl.emailClients = append(cl.emailClients, email.New(applicationYamlKey))
+		cl.fromRecipients = append(cl.fromRecipients, fromRecipient{cfg.FromEmailName, cfg.FromEmailAddress})
+		for i := range cfg.ExtraLoadBalancersCount {
+			var nestedCfg config
+			appcfg.MustLoadFromKey(fmt.Sprintf("%v/%v", applicationYamlKey, i+1), &nestedCfg)
+			cl.emailClients = append(cl.emailClients, email.New(fmt.Sprintf("%v/%v", applicationYamlKey, i+1)))
+			cl.fromRecipients = append(cl.fromRecipients, fromRecipient{nestedCfg.FromEmailName, nestedCfg.FromEmailAddress})
+		}
 	}
 	go cl.startOldLoginAttemptsCleaner(ctx)
 

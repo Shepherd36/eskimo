@@ -193,7 +193,7 @@ func (*threeDivi) parseApplicant(userID string, bafApplicant *applicant) *users.
 		usr.KYCStepPassed = &stepPassed
 	}
 	switch {
-	case bafApplicant != nil && bafApplicant.LastValidationResponse != nil && (bafApplicant.Status == statusFailed || bafApplicant.HasRiskEvents):
+	case bafApplicant != nil && bafApplicant.LastValidationResponse != nil && bafApplicant.Status == statusFailed && bafApplicant.HasRiskEvents:
 		kycStepBlocked := users.FacialRecognitionKYCStep
 		usr.KYCStepBlocked = &kycStepBlocked
 	default:

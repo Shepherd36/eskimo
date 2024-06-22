@@ -224,7 +224,7 @@ func (s *service) GetTopCountries( //nolint:gocritic // False negative.
 //	@Failure		500					{object}	server.ErrorResponse
 //	@Failure		504					{object}	server.ErrorResponse	"if request times out"
 //	@Router			/v1r/user-statistics/user-growth [GET].
-func (s *service) GetUserGrowth( //nolint:gocritic // False negative.
+func (s *service) GetUserGrowth( //nolint:funlen,gocritic // False negative.
 	ctx context.Context,
 	req *server.Request[GetUserGrowthArg, users.UserGrowthStatistics],
 ) (*server.Response[users.UserGrowthStatistics], *server.Response[server.ErrorResponse]) {
@@ -251,7 +251,12 @@ func (s *service) GetUserGrowth( //nolint:gocritic // False negative.
 	if err != nil {
 		return nil, server.Unexpected(errors.Wrapf(err, "failed to get user growth stats for: %#v", req.Data))
 	}
-	result.Total = result.Active
+	if true {
+		result.Total = result.Active
+		for i := range result.TimeSeries {
+			result.TimeSeries[i].Total = result.TimeSeries[i].Active
+		}
+	}
 
 	return server.OK(result), nil
 }

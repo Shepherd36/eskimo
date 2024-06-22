@@ -251,6 +251,7 @@ func (s *service) GetUserGrowth( //nolint:gocritic // False negative.
 	if err != nil {
 		return nil, server.Unexpected(errors.Wrapf(err, "failed to get user growth stats for: %#v", req.Data))
 	}
+	result.Total = result.Active
 
 	return server.OK(result), nil
 }

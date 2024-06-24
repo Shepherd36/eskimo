@@ -32,14 +32,14 @@ func (r *repository) TryResetKYCSteps(ctx context.Context, resetClient ResetKycC
 		r.sanitizeUserForUI(&resp.User)
 
 		return &resp.User, nil
-	} else if err = r.resetKYCSteps(ctx, resetClient, userID, resp.KYCStepsToReset); err != nil {
+	} else if err = r.resetKYCSteps(ctx, resetClient, &resp.User, resp.KYCStepsToReset); err != nil {
 		return nil, errors.Wrapf(err, "failed to resetKYCSteps for userID:%v", userID)
 	}
 
 	return r.TryResetKYCSteps(ctx, resetClient, userID)
 }
 
-func (r *repository) resetKYCSteps(ctx context.Context, resetClient ResetKycClient, userID string, kycStepsToBeReset []KYCStep) error {
+func (r *repository) resetKYCSteps(ctx context.Context, resetClient ResetKycClient, user *User, kycStepsToBeReset []KYCStep) error {
 	kycStepResetPipelines := make(map[KYCStep]struct{}, len(kycStepsToBeReset))
 	for _, kycStep := range kycStepsToBeReset {
 		if kycStep == LivenessDetectionKYCStep || kycStep == FacialRecognitionKYCStep {
@@ -54,7 +54,7 @@ func (r *repository) resetKYCSteps(ctx context.Context, resetClient ResetKycClie
 	for kycStep := range kycStepResetPipelines {
 		go func(step KYCStep) {
 			defer wg.Done()
-			errs <- errors.Wrapf(r.resetKYCStep(ctx, resetClient, userID, step), "failed to resetKYCStep(%v) for userID:%v", step, userID)
+			errs <- errors.Wrapf(r.resetKYCStep(ctx, resetClient, user, step), "failed to resetKYCStep(%v) for userID:%v", step, user.ID)
 		}(kycStep)
 	}
 	wg.Wait()
@@ -64,21 +64,21 @@ func (r *repository) resetKYCSteps(ctx context.Context, resetClient ResetKycClie
 		responses = append(responses, err)
 	}
 	if err := multierror.Append(nil, responses...).ErrorOrNil(); err != nil {
-		return errors.Wrapf(err, "atleast one resetKYCStep failed for userID:%v", userID)
+		return errors.Wrapf(err, "atleast one resetKYCStep failed for userID:%v", user.ID)
 	}
-	_, err := storage.Exec(ctx, r.db, `DELETE FROM kyc_steps_reset_requests WHERE user_id = $1`, userID)
+	_, err := storage.Exec(ctx, r.db, `DELETE FROM kyc_steps_reset_requests WHERE user_id = $1`, user.ID)
 
-	return errors.Wrapf(err, "failed to delete kyc step reset request for userID:%v", userID)
+	return errors.Wrapf(err, "failed to delete kyc step reset request for userID:%v", user.ID)
 }
 
-func (r *repository) resetKYCStep(ctx context.Context, resetClient ResetKycClient, userID string, step KYCStep) error {
+func (r *repository) resetKYCStep(ctx context.Context, resetClient ResetKycClient, user *User, step KYCStep) error {
 	switch step { //nolint:exhaustive // Not needed yet.
 	case FacialRecognitionKYCStep:
-		if err := resetClient.Reset(ctx, userID, true); err != nil {
-			return errors.Wrapf(err, "failed to resetFacialRecognitionKYCStep for userID:%v", userID)
+		if err := resetClient.Reset(ctx, user, true); err != nil {
+			return errors.Wrapf(err, "failed to resetFacialRecognitionKYCStep for userID:%v", user.ID)
 		}
 	default:
-		log.Error(errors.Errorf("reset for KYCStep[%v] not implemented, userID:%v", step, userID))
+		log.Error(errors.Errorf("reset for KYCStep[%v] not implemented, userID:%v", step, user.ID))
 
 		return nil
 	}
@@ -86,9 +86,9 @@ func (r *repository) resetKYCStep(ctx context.Context, resetClient ResetKycClien
 	sql := `UPDATE kyc_steps_reset_requests 
 			SET kyc_steps_to_reset = array_remove(kyc_steps_to_reset, $2::smallint)
 			WHERE user_id = $1`
-	if updated, err := storage.Exec(ctx, r.db, sql, userID, step); err != nil || updated == 0 {
+	if updated, err := storage.Exec(ctx, r.db, sql, user.ID, step); err != nil || updated == 0 {
 		if updated == 0 {
-			err = errors.Wrapf(ErrNotFound, "failed to remove step[%v] from kyc_steps_reset_requests for userID:%v", step, userID)
+			err = errors.Wrapf(ErrNotFound, "failed to remove step[%v] from kyc_steps_reset_requests for userID:%v", step, user.ID)
 		}
 		if storage.IsErr(err, storage.ErrCheckFailed) {
 			// This happens if the resulting array is empty, at which point we need to delete the entire entry,
@@ -96,7 +96,7 @@ func (r *repository) resetKYCStep(ctx context.Context, resetClient ResetKycClien
 			err = nil
 		}
 		if err != nil {
-			return errors.Wrapf(err, "[db]failed to resetKYCStep[%v] for userID:%v", step, userID)
+			return errors.Wrapf(err, "[db]failed to resetKYCStep[%v] for userID:%v", step, user.ID)
 		}
 	}
 

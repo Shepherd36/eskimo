@@ -116,12 +116,12 @@ func (*threeDivi) activeUsers(data []byte) (int, error) {
 	return openConns / connsPerUser, nil
 }
 
-func (t *threeDivi) CheckAndUpdateStatus(ctx context.Context, userID string) (hasFaceKYCResult bool, err error) {
-	bafApplicant, err := t.searchIn3DiviForApplicant(ctx, userID)
+func (t *threeDivi) CheckAndUpdateStatus(ctx context.Context, user *users.User) (hasFaceKYCResult bool, err error) {
+	bafApplicant, err := t.searchIn3DiviForApplicant(ctx, user.ID)
 	if err != nil && !errors.Is(err, errFaceAuthNotStarted) {
 		return false, errors.Wrapf(err, "failed to sync face auth status from 3divi BAF")
 	}
-	usr := t.parseApplicant(userID, bafApplicant)
+	usr := t.parseApplicant(user, bafApplicant)
 	hasFaceKYCResult = (usr.KYCStepPassed != nil && *usr.KYCStepPassed >= users.LivenessDetectionKYCStep) ||
 		(usr.KYCStepBlocked != nil && *usr.KYCStepBlocked > users.NoneKYCStep)
 	_, mErr := t.users.ModifyUser(ctx, usr, nil)
@@ -130,14 +130,14 @@ func (t *threeDivi) CheckAndUpdateStatus(ctx context.Context, userID string) (ha
 }
 
 //nolint:funlen,revive // .
-func (t *threeDivi) Reset(ctx context.Context, userID string, fetchState bool) error {
-	bafApplicant, err := t.searchIn3DiviForApplicant(ctx, userID)
+func (t *threeDivi) Reset(ctx context.Context, user *users.User, fetchState bool) error {
+	bafApplicant, err := t.searchIn3DiviForApplicant(ctx, user.ID)
 	if err != nil {
 		if errors.Is(err, errFaceAuthNotStarted) {
 			return nil
 		}
 
-		return errors.Wrapf(err, "failed to find matching applicant for userID %v", userID)
+		return errors.Wrapf(err, "failed to find matching applicant for userID %v", user.ID)
 	}
 	var resp *req.Response
 	if resp, err = req.
@@ -160,48 +160,71 @@ func (t *threeDivi) Reset(ctx context.Context, userID string, fetchState bool) e
 		SetHeader("Authorization", fmt.Sprintf("Bearer %v", t.cfg.ThreeDiVi.BAFToken)).
 		SetHeader("X-Secret-Api-Token", t.cfg.ThreeDiVi.SecretAPIToken).
 		Delete(fmt.Sprintf("%v/publicapi/api/v2/private/Applicants/%v", t.cfg.ThreeDiVi.BAFHost, bafApplicant.ApplicantID)); err != nil {
-		return errors.Wrapf(err, "failed to delete face auth state for userID:%v", userID)
+		return errors.Wrapf(err, "failed to delete face auth state for userID:%v", user.ID)
 	} else if statusCode := resp.GetStatusCode(); statusCode != http.StatusOK && statusCode != http.StatusNoContent {
-		return errors.Errorf("[%v]failed to delete face auth state for userID:%v", statusCode, userID)
+		return errors.Errorf("[%v]failed to delete face auth state for userID:%v", statusCode, user.ID)
 	} else if _, err2 := resp.ToBytes(); err2 != nil {
-		return errors.Wrapf(err2, "failed to read body of delete face auth state request for userID:%v", userID)
+		return errors.Wrapf(err2, "failed to read body of delete face auth state request for userID:%v", user.ID)
 	} else { //nolint:revive // .
 		if fetchState {
-			_, err = t.CheckAndUpdateStatus(ctx, userID)
+			_, err = t.CheckAndUpdateStatus(ctx, user)
 
-			return errors.Wrapf(err, "failed to check user's face auth state after reset for userID %v", userID)
+			return errors.Wrapf(err, "failed to check user's face auth state after reset for userID %v", user.ID)
 		}
 
 		return nil
 	}
 }
 
-func (*threeDivi) parseApplicant(userID string, bafApplicant *applicant) *users.User {
-	usr := new(users.User)
-	usr.ID = userID
+//nolint:funlen //.
+func (*threeDivi) parseApplicant(user *users.User, bafApplicant *applicant) *users.User {
+	updUser := new(users.User)
+	updUser.ID = user.ID
 	if bafApplicant != nil && bafApplicant.LastValidationResponse != nil && bafApplicant.Status == statusPassed {
 		passedTime := time.New(bafApplicant.LastValidationResponse.CreatedAt)
-		times := []*time.Time{passedTime, passedTime}
-		usr.KYCStepsLastUpdatedAt = &times
-		stepPassed := users.LivenessDetectionKYCStep
-		usr.KYCStepPassed = &stepPassed
-	} else {
-		var nilDates []*time.Time
-		usr.KYCStepsLastUpdatedAt = &nilDates
-		usr.KYCStepsCreatedAt = &nilDates
-		stepPassed := users.NoneKYCStep
-		usr.KYCStepPassed = &stepPassed
+		if user.KYCStepsCreatedAt != nil && len(*user.KYCStepsCreatedAt) >= int(users.LivenessDetectionKYCStep) {
+			updUser.KYCStepsCreatedAt = user.KYCStepsCreatedAt
+			updUser.KYCStepsLastUpdatedAt = user.KYCStepsLastUpdatedAt
+			(*updUser.KYCStepsCreatedAt)[stepIdx(users.FacialRecognitionKYCStep)] = passedTime
+			(*updUser.KYCStepsCreatedAt)[stepIdx(users.LivenessDetectionKYCStep)] = passedTime
+			(*updUser.KYCStepsLastUpdatedAt)[stepIdx(users.FacialRecognitionKYCStep)] = passedTime
+			(*updUser.KYCStepsLastUpdatedAt)[stepIdx(users.LivenessDetectionKYCStep)] = passedTime
+		} else {
+			times := []*time.Time{passedTime, passedTime}
+			updUser.KYCStepsLastUpdatedAt = &times
+			stepPassed := users.LivenessDetectionKYCStep
+			updUser.KYCStepPassed = &stepPassed
+		}
+	} else if user.KYCStepsCreatedAt != nil && len(*user.KYCStepsCreatedAt) >= int(users.LivenessDetectionKYCStep) {
+		updUser.KYCStepsCreatedAt = user.KYCStepsCreatedAt
+		updUser.KYCStepsLastUpdatedAt = user.KYCStepsLastUpdatedAt
+		(*updUser.KYCStepsCreatedAt)[stepIdx(users.FacialRecognitionKYCStep)] = nil
+		(*updUser.KYCStepsCreatedAt)[stepIdx(users.LivenessDetectionKYCStep)] = nil
+		(*updUser.KYCStepsLastUpdatedAt)[stepIdx(users.FacialRecognitionKYCStep)] = nil
+		(*updUser.KYCStepsLastUpdatedAt)[stepIdx(users.LivenessDetectionKYCStep)] = nil
 	}
 	switch {
 	case bafApplicant != nil && bafApplicant.LastValidationResponse != nil && bafApplicant.Status == statusFailed && bafApplicant.HasRiskEvents:
 		kycStepBlocked := users.FacialRecognitionKYCStep
-		usr.KYCStepBlocked = &kycStepBlocked
+		updUser.KYCStepBlocked = &kycStepBlocked
 	default:
 		kycStepBlocked := users.NoneKYCStep
-		usr.KYCStepBlocked = &kycStepBlocked
+		updUser.KYCStepBlocked = &kycStepBlocked
+	}
+	user.KYCStepsLastUpdatedAt = updUser.KYCStepsLastUpdatedAt
+	user.KYCStepsCreatedAt = updUser.KYCStepsCreatedAt
+	if updUser.KYCStepPassed != nil {
+		user.KYCStepPassed = updUser.KYCStepPassed
+	}
+	if updUser.KYCStepBlocked != nil {
+		user.KYCStepBlocked = updUser.KYCStepBlocked
 	}
 
-	return usr
+	return updUser
+}
+
+func stepIdx(step users.KYCStep) int {
+	return int(step) - 1
 }
 
 func (t *threeDivi) searchIn3DiviForApplicant(ctx context.Context, userID users.UserID) (*applicant, error) {

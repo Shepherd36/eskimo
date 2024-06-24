@@ -20,22 +20,22 @@ func New(usersRep UserRepository) Client {
 	return &client{client: threedivi.New3Divi(usersRep, &cfg.ThreeDiVi)}
 }
 
-func (c *client) CheckStatus(ctx context.Context, userID string, nextKYCStep users.KYCStep) (bool, error) {
+func (c *client) CheckStatus(ctx context.Context, user *users.User, nextKYCStep users.KYCStep) (bool, error) {
 	kycFaceAvailable := false
-	if hasResult, err := c.client.CheckAndUpdateStatus(ctx, userID); err != nil {
-		return false, errors.Wrapf(err, "failed to update face auth status for user ID %s", userID)
+	if hasResult, err := c.client.CheckAndUpdateStatus(ctx, user); err != nil {
+		return false, errors.Wrapf(err, "failed to update face auth status for user ID %s", user.ID)
 	} else if !hasResult || nextKYCStep == users.LivenessDetectionKYCStep {
 		availabilityErr := c.client.Available(ctx)
 		if availabilityErr == nil {
 			kycFaceAvailable = true
 		} else {
-			log.Error(errors.Wrapf(err, "face auth is unavailable for userID %v KYCStep %v", userID, nextKYCStep))
+			log.Error(errors.Wrapf(err, "face auth is unavailable for userID %v KYCStep %v", user.ID, nextKYCStep))
 		}
 	}
 
 	return kycFaceAvailable, nil
 }
 
-func (c *client) Reset(ctx context.Context, userID string, fetchState bool) error {
-	return errors.Wrapf(c.client.Reset(ctx, userID, fetchState), "failed to reset face auth state for userID %s", userID)
+func (c *client) Reset(ctx context.Context, user *users.User, fetchState bool) error {
+	return errors.Wrapf(c.client.Reset(ctx, user, fetchState), "failed to reset face auth state for userID %s", user.ID)
 }

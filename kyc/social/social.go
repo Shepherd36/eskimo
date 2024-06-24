@@ -148,9 +148,11 @@ func (r *repository) VerifyPost(ctx context.Context, metadata *VerificationMetad
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to GetUserByID: %v", metadata.UserID)
 	}
+
 	if err = r.validateKycStep(user.User, metadata.KYCStep, now); err != nil {
 		return nil, errors.Wrap(err, "failed to validateKycStep")
 	}
+
 	skippedCount, err := r.verifySkipped(ctx, metadata, now)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to verifySkipped for metadata:%#v", metadata)
@@ -264,14 +266,15 @@ func (r *repository) VerifyPost(ctx context.Context, metadata *VerificationMetad
 }
 
 func (r *repository) validateKycStep(user *users.User, kycStep users.KYCStep, now *time.Time) error {
-	if user.KYCStepPassed == nil ||
+	allowSocialBeforeFace := true
+	if !allowSocialBeforeFace && (user.KYCStepPassed == nil ||
 		*user.KYCStepPassed < kycStep-1 ||
 		(user.KYCStepPassed != nil &&
 			*user.KYCStepPassed == kycStep-1 &&
 			user.KYCStepsLastUpdatedAt != nil &&
 			len(*user.KYCStepsLastUpdatedAt) >= int(kycStep) &&
 			!(*user.KYCStepsLastUpdatedAt)[kycStep-1].IsNil() &&
-			now.Sub(*(*user.KYCStepsLastUpdatedAt)[kycStep-1].Time) < r.cfg.DelayBetweenSessions) {
+			now.Sub(*(*user.KYCStepsLastUpdatedAt)[kycStep-1].Time) < r.cfg.DelayBetweenSessions)) {
 		return ErrNotAvailable
 	} else if user.KYCStepPassed != nil && *user.KYCStepPassed >= kycStep {
 		return ErrDuplicate
@@ -280,7 +283,7 @@ func (r *repository) validateKycStep(user *users.User, kycStep users.KYCStep, no
 	return nil
 }
 
-//nolint:revive,funlen // Nope.
+//nolint:revive,funlen,gocognit // Nope.
 func (r *repository) modifyUser(ctx context.Context, success, skip bool, kycStep users.KYCStep, now *time.Time, user *users.User) error {
 	usr := new(users.User)
 	usr.ID = user.ID
@@ -288,6 +291,10 @@ func (r *repository) modifyUser(ctx context.Context, success, skip bool, kycStep
 	switch {
 	case success:
 		usr.KYCStepPassed = &kycStep
+		if usr.KYCStepsLastUpdatedAt == nil {
+			emptyFaceRecognition := []*time.Time{nil, nil}
+			usr.KYCStepsLastUpdatedAt = &emptyFaceRecognition
+		}
 		if len(*usr.KYCStepsLastUpdatedAt) < int(kycStep) {
 			*usr.KYCStepsLastUpdatedAt = append(*usr.KYCStepsLastUpdatedAt, now)
 		} else {

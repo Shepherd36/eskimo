@@ -292,20 +292,20 @@ func (s *service) TryResetKYCSteps( //nolint:gocritic,funlen,gocognit,revive,cyc
 	if err != nil {
 		return nil, server.Unexpected(errors.Wrapf(err, "failed to CheckQuizStatus for userID:%v", req.Data.UserID))
 	}
-	kycFaceAvailable := false
-	if req.Data.NextKYCStep != nil &&
-		(*req.Data.NextKYCStep == users.FacialRecognitionKYCStep || *req.Data.NextKYCStep == users.LivenessDetectionKYCStep) {
-		kycFaceAvailable, err = s.faceKycClient.CheckStatus(ctx, req.Data.UserID, *req.Data.NextKYCStep)
-		if err != nil {
-			return nil, server.Unexpected(err)
-		}
-	}
 	resp, err := s.usersProcessor.TryResetKYCSteps(ctx, s.faceKycClient, req.Data.UserID)
 	if err = errors.Wrapf(err, "failed to TryResetKYCSteps for userID:%v", req.Data.UserID); err != nil {
 		switch {
 		case errors.Is(err, users.ErrNotFound):
 			return nil, server.NotFound(err, userNotFoundErrorCode)
 		default:
+			return nil, server.Unexpected(err)
+		}
+	}
+	kycFaceAvailable := false
+	if req.Data.NextKYCStep != nil &&
+		(*req.Data.NextKYCStep == users.FacialRecognitionKYCStep || *req.Data.NextKYCStep == users.LivenessDetectionKYCStep) {
+		kycFaceAvailable, err = s.faceKycClient.CheckStatus(ctx, resp, *req.Data.NextKYCStep)
+		if err != nil {
 			return nil, server.Unexpected(err)
 		}
 	}

@@ -200,7 +200,7 @@ type (
 		IsEmailUsedBySomebodyElse(ctx context.Context, userID, email string) (bool, error)
 	}
 	ResetKycClient interface {
-		Reset(ctx context.Context, userID string, fetchState bool) error
+		Reset(ctx context.Context, user *User, fetchState bool) error
 	}
 	WriteRepository interface {
 		CreateUser(ctx context.Context, usr *User, clientIP net.IP) error

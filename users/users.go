@@ -295,9 +295,12 @@ func (r *repository) buildRepeatableKYCSteps(usr *User) {
 	if r.cfg.IntervalBetweenRepeatableKYCSteps == 0 {
 		log.Panic(errors.New("`intervalBetweenRepeatableKYCSteps` config is missing"))
 	}
-	nextDate := (*usr.KYCStepsLastUpdatedAt)[LivenessDetectionKYCStep-1].Add(r.cfg.IntervalBetweenRepeatableKYCSteps)
+	date := (*usr.KYCStepsLastUpdatedAt)[LivenessDetectionKYCStep-1]
 	repeatableKYCSteps := make(map[KYCStep]*time.Time, 1)
-	repeatableKYCSteps[LivenessDetectionKYCStep] = time.New(nextDate)
+	if !date.IsNil() {
+		nextDate := date.Add(r.cfg.IntervalBetweenRepeatableKYCSteps)
+		repeatableKYCSteps[LivenessDetectionKYCStep] = time.New(nextDate)
+	}
 	usr.RepeatableKYCSteps = &repeatableKYCSteps
 }
 

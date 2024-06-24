@@ -154,7 +154,7 @@ func (u *User) override(user *User) *User {
 	return usr
 }
 
-//nolint:funlen,gocognit,gocyclo,revive,cyclop // Because it's a big unitary SQL processing logic.
+//nolint:funlen,gocognit,gocyclo,revive,cyclop,maintidx // Because it's a big unitary SQL processing logic.
 func (u *User) genSQLUpdate(ctx context.Context, agendaUserIDs []UserID) (sql string, params []any) {
 	params = make([]any, 0)
 	params = append(params, u.ID, u.UpdatedAt.Time)
@@ -259,26 +259,37 @@ func (u *User) genSQLUpdate(ctx context.Context, agendaUserIDs []UserID) (sql st
 		sql += fmt.Sprintf(", MINING_BLOCKCHAIN_ACCOUNT_ADDRESS = $%v", nextIndex)
 		nextIndex++
 	}
-	if u.KYCStepsLastUpdatedAt != nil {
+	if u.KYCStepsLastUpdatedAt != nil { //nolint:nestif // Handling nil values.
 		if *u.KYCStepsLastUpdatedAt == nil {
 			sql += ", KYC_STEPS_LAST_UPDATED_AT = NULL"
 		} else {
-			kycStepsLastUpdatedAt := make([]stdlibtime.Time, 0, len(*u.KYCStepsLastUpdatedAt))
+			kycStepsLastUpdatedAt := make([]*stdlibtime.Time, 0, len(*u.KYCStepsLastUpdatedAt))
 			for _, updatedAt := range *u.KYCStepsLastUpdatedAt {
-				kycStepsLastUpdatedAt = append(kycStepsLastUpdatedAt, *updatedAt.Time)
+				if updatedAt.IsNil() {
+					kycStepsLastUpdatedAt = append(kycStepsLastUpdatedAt, nil)
+				} else {
+					kycStepsLastUpdatedAt = append(kycStepsLastUpdatedAt, updatedAt.Time)
+				}
 			}
 			params = append(params, kycStepsLastUpdatedAt)
-			sql += fmt.Sprintf(", KYC_STEPS_LAST_UPDATED_AT = NULLIF(array_remove(array[coalesce(($%[1]v::timestamp[])[1],(KYC_STEPS_LAST_UPDATED_AT)[1]),coalesce(($%[1]v::timestamp[])[2],(KYC_STEPS_LAST_UPDATED_AT)[2]),coalesce(($%[1]v::timestamp[])[3],(KYC_STEPS_LAST_UPDATED_AT)[3]),coalesce(($%[1]v::timestamp[])[4],(KYC_STEPS_LAST_UPDATED_AT)[4]),coalesce(($%[1]v::timestamp[])[5],(KYC_STEPS_LAST_UPDATED_AT)[5]),coalesce(($%[1]v::timestamp[])[6],(KYC_STEPS_LAST_UPDATED_AT)[6]),coalesce(($%[1]v::timestamp[])[7],(KYC_STEPS_LAST_UPDATED_AT)[7]),coalesce(($%[1]v::timestamp[])[8],(KYC_STEPS_LAST_UPDATED_AT)[8]),coalesce(($%[1]v::timestamp[])[9],(KYC_STEPS_LAST_UPDATED_AT)[9]),coalesce(($%[1]v::timestamp[])[10],(KYC_STEPS_LAST_UPDATED_AT)[10])],null),array[]::timestamp[]), KYC_STEPS_CREATED_AT = NULLIF(array_remove(array[coalesce((KYC_STEPS_CREATED_AT)[1],($%[1]v::timestamp[])[1]),coalesce((KYC_STEPS_CREATED_AT)[2],($%[1]v::timestamp[])[2]),coalesce((KYC_STEPS_CREATED_AT)[3],($%[1]v::timestamp[])[3]),coalesce((KYC_STEPS_CREATED_AT)[4],($%[1]v::timestamp[])[4]),coalesce((KYC_STEPS_CREATED_AT)[5],($%[1]v::timestamp[])[5]),coalesce((KYC_STEPS_CREATED_AT)[6],($%[1]v::timestamp[])[6]),coalesce((KYC_STEPS_CREATED_AT)[7],($%[1]v::timestamp[])[7]),coalesce((KYC_STEPS_CREATED_AT)[8],($%[1]v::timestamp[])[8]),coalesce((KYC_STEPS_CREATED_AT)[9],($%[1]v::timestamp[])[9]),coalesce((KYC_STEPS_CREATED_AT)[10],($%[1]v::timestamp[])[10])],null),array[]::timestamp[])", nextIndex) //nolint:lll // .
+			sql += fmt.Sprintf(", KYC_STEPS_LAST_UPDATED_AT = NULLIF(array[($%[1]v::timestamp[])[1],($%[1]v::timestamp[])[2]] || array_remove(array[coalesce(($%[1]v::timestamp[])[3],(KYC_STEPS_LAST_UPDATED_AT)[3]),coalesce(($%[1]v::timestamp[])[4],(KYC_STEPS_LAST_UPDATED_AT)[4]),coalesce(($%[1]v::timestamp[])[5],(KYC_STEPS_LAST_UPDATED_AT)[5]),coalesce(($%[1]v::timestamp[])[6],(KYC_STEPS_LAST_UPDATED_AT)[6]),coalesce(($%[1]v::timestamp[])[7],(KYC_STEPS_LAST_UPDATED_AT)[7]),coalesce(($%[1]v::timestamp[])[8],(KYC_STEPS_LAST_UPDATED_AT)[8]),coalesce(($%[1]v::timestamp[])[9],(KYC_STEPS_LAST_UPDATED_AT)[9]),coalesce(($%[1]v::timestamp[])[10],(KYC_STEPS_LAST_UPDATED_AT)[10])],null),array[]::timestamp[])", nextIndex) //nolint:lll // .
+			if u.KYCStepsCreatedAt == nil {
+				sql += fmt.Sprintf(", KYC_STEPS_CREATED_AT = NULLIF(array[coalesce((KYC_STEPS_CREATED_AT)[1],($%[1]v::timestamp[])[1]),coalesce((KYC_STEPS_CREATED_AT)[2],($%[1]v::timestamp[])[2])] || array_remove(array[coalesce((KYC_STEPS_CREATED_AT)[3],($%[1]v::timestamp[])[3]),coalesce((KYC_STEPS_CREATED_AT)[4],($%[1]v::timestamp[])[4]),coalesce((KYC_STEPS_CREATED_AT)[5],($%[1]v::timestamp[])[5]),coalesce((KYC_STEPS_CREATED_AT)[6],($%[1]v::timestamp[])[6]),coalesce((KYC_STEPS_CREATED_AT)[7],($%[1]v::timestamp[])[7]),coalesce((KYC_STEPS_CREATED_AT)[8],($%[1]v::timestamp[])[8]),coalesce((KYC_STEPS_CREATED_AT)[9],($%[1]v::timestamp[])[9]),coalesce((KYC_STEPS_CREATED_AT)[10],($%[1]v::timestamp[])[10])],null),array[]::timestamp[])", nextIndex) //nolint:lll // .
+			}
 			nextIndex++
 		}
 	}
-	if u.KYCStepsCreatedAt != nil {
+	if u.KYCStepsCreatedAt != nil { //nolint:nestif // Handling nil values.
 		if *u.KYCStepsCreatedAt == nil {
 			sql += ", KYC_STEPS_CREATED_AT = NULL"
 		} else {
-			kycStepsCreatedAt := make([]stdlibtime.Time, 0, len(*u.KYCStepsCreatedAt))
+			kycStepsCreatedAt := make([]*stdlibtime.Time, 0, len(*u.KYCStepsCreatedAt))
 			for _, createdAt := range *u.KYCStepsCreatedAt {
-				kycStepsCreatedAt = append(kycStepsCreatedAt, *createdAt.Time)
+				if createdAt.IsNil() {
+					kycStepsCreatedAt = append(kycStepsCreatedAt, nil)
+				} else {
+					kycStepsCreatedAt = append(kycStepsCreatedAt, createdAt.Time)
+				}
 			}
 			params = append(params, kycStepsCreatedAt)
 			sql += fmt.Sprintf(", KYC_STEPS_CREATED_AT = $%[1]v::timestamp[]", nextIndex)

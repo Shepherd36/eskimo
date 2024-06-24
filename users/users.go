@@ -268,7 +268,12 @@ func (u *User) SetVerified() {
 }
 
 func (u *User) IsVerified() bool {
-	return u != nil && u.KYCStepPassed != nil && *u.KYCStepPassed >= LivenessDetectionKYCStep
+	return u != nil && u.KYCStepPassed != nil && *u.KYCStepPassed >= LivenessDetectionKYCStep &&
+		u.KYCStepsLastUpdatedAt != nil && u.KYCStepsCreatedAt != nil &&
+		len(*u.KYCStepsCreatedAt) >= int(LivenessDetectionKYCStep) &&
+		len(*u.KYCStepsLastUpdatedAt) >= int(LivenessDetectionKYCStep) &&
+		!(*u.KYCStepsCreatedAt)[LivenessDetectionKYCStep-1].IsNil() &&
+		!(*u.KYCStepsLastUpdatedAt)[LivenessDetectionKYCStep-1].IsNil()
 }
 
 func (r *repository) sanitizeUserForUI(usr *User) {

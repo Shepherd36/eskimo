@@ -30,26 +30,25 @@ func New(ctx context.Context, usersRep UserRepository) Client {
 func (c *client) CheckStatus(ctx context.Context, user *users.User, nextKYCStep users.KYCStep) (bool, error) {
 	kycFaceAvailable := false
 	if errs := c.unexpectedErrors.Load(); errs >= c.cfg.UnexpectedErrorsAllowed {
-		log.Error(errors.Errorf("some unexpected error occurred recently"))
+		log.Error(errors.Errorf("some unexpected error occurred recently for user id %v", user.ID))
 
 		return false, nil
 	}
-	//nolint:nestif // .
-	if hasResult, err := c.client.CheckAndUpdateStatus(ctx, user); err != nil {
-		c.unexpectedErrors.Add(1)
-		log.Error(errors.Wrapf(err, "[unexpected]failed to update face auth status for user ID %s", user.ID))
+	availabilityErr := c.client.Available(ctx)
+	if availabilityErr == nil {
+		kycFaceAvailable = true
+		if _, err := c.client.CheckAndUpdateStatus(ctx, user); err != nil {
+			c.unexpectedErrors.Add(1)
+			log.Error(errors.Wrapf(err, "[unexpected]failed to update face auth status for user ID %s", user.ID))
 
-		return false, nil
-	} else if !hasResult || nextKYCStep == users.LivenessDetectionKYCStep {
-		availabilityErr := c.client.Available(ctx)
-		if availabilityErr == nil {
-			kycFaceAvailable = true
-		} else {
-			if !errors.Is(err, internal.ErrNotAvailable) {
-				c.unexpectedErrors.Add(1)
-			}
-			log.Error(errors.Wrapf(err, "[unexpected]face auth is unavailable for userID %v KYCStep %v", user.ID, nextKYCStep))
+			return false, nil
 		}
+
+		return kycFaceAvailable, nil
+	}
+	if !errors.Is(availabilityErr, internal.ErrNotAvailable) {
+		c.unexpectedErrors.Add(1)
+		log.Error(errors.Wrapf(availabilityErr, "[unexpected]face auth is unavailable for userID %v KYCStep %v", user.ID, nextKYCStep))
 	}
 
 	return kycFaceAvailable, nil

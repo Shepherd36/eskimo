@@ -291,7 +291,7 @@ func (r *repository) modifyUser(ctx context.Context, success, skip bool, kycStep
 	switch {
 	case success:
 		usr.KYCStepPassed = &kycStep
-		if usr.KYCStepsLastUpdatedAt == nil {
+		if usr.KYCStepsLastUpdatedAt == nil || len(*usr.KYCStepsLastUpdatedAt) == 0 {
 			emptyFaceRecognition := []*time.Time{nil, nil}
 			usr.KYCStepsLastUpdatedAt = &emptyFaceRecognition
 		}
@@ -314,6 +314,10 @@ func (r *repository) modifyUser(ctx context.Context, success, skip bool, kycStep
 			}
 		}
 	case !success:
+		if usr.KYCStepsLastUpdatedAt == nil || len(*usr.KYCStepsLastUpdatedAt) == 0 {
+			emptyFaceRecognition := []*time.Time{nil, nil}
+			usr.KYCStepsLastUpdatedAt = &emptyFaceRecognition
+		}
 		if len(*usr.KYCStepsLastUpdatedAt) < int(kycStep) {
 			*usr.KYCStepsLastUpdatedAt = append(*usr.KYCStepsLastUpdatedAt, now)
 		} else {

@@ -6,6 +6,8 @@ import (
 	"context"
 	"mime/multipart"
 
+	"github.com/pkg/errors"
+
 	"github.com/ice-blockchain/eskimo/users"
 )
 
@@ -19,3 +21,6 @@ type (
 		ModifyUser(ctx context.Context, usr *users.User, profilePicture *multipart.FileHeader) (*users.UserProfile, error)
 	}
 )
+
+//nolint:grouper // .
+var ErrNotAvailable = errors.Errorf("not available")

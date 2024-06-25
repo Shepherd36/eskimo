@@ -54,7 +54,7 @@ func (s *service) Init(ctx context.Context, cancel context.CancelFunc) {
 	s.authEmailLinkClient = emaillink.NewClient(ctx, s.usersProcessor, server.Auth(ctx))
 	s.socialRepository = social.New(ctx, s.usersProcessor)
 	s.quizRepository = kycquiz.NewRepository(ctx, s.usersProcessor)
-	s.faceKycClient = facekyc.New(s.usersProcessor)
+	s.faceKycClient = facekyc.New(ctx, s.usersProcessor)
 }
 
 func (s *service) Close(ctx context.Context) error {

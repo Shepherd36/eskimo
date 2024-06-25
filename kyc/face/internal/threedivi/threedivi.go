@@ -52,7 +52,7 @@ func (t *threeDivi) Available(ctx context.Context) error {
 	}
 	if resp, err := req.
 		SetContext(ctx).
-		SetRetryCount(25).                                                       //nolint:gomnd // .
+		SetRetryCount(10).                                                       //nolint:gomnd // .
 		SetRetryBackoffInterval(10*stdlibtime.Millisecond, 1*stdlibtime.Second). //nolint:gomnd // .
 		SetRetryHook(func(resp *req.Response, err error) {
 			if err != nil {
@@ -84,7 +84,7 @@ func (t *threeDivi) isAvailable(data []byte) error {
 		return errors.Wrapf(cErr, "failed to parse metrics of availability of face auth")
 	}
 	if activeUsers+1 > t.cfg.ThreeDiVi.ConcurrentUsers {
-		return errors.Errorf("not available: %v users with limit of %v", activeUsers, t.cfg.ThreeDiVi.ConcurrentUsers)
+		return internal.ErrNotAvailable
 	}
 
 	return nil
@@ -142,7 +142,7 @@ func (t *threeDivi) Reset(ctx context.Context, user *users.User, fetchState bool
 	var resp *req.Response
 	if resp, err = req.
 		SetContext(ctx).
-		SetRetryCount(25).                                                       //nolint:gomnd // .
+		SetRetryCount(10).                                                       //nolint:gomnd // .
 		SetRetryBackoffInterval(10*stdlibtime.Millisecond, 1*stdlibtime.Second). //nolint:gomnd // .
 		SetRetryHook(func(resp *req.Response, err error) {
 			if err != nil {
@@ -230,7 +230,7 @@ func stepIdx(step users.KYCStep) int {
 func (t *threeDivi) searchIn3DiviForApplicant(ctx context.Context, userID users.UserID) (*applicant, error) {
 	if resp, err := req.
 		SetContext(ctx).
-		SetRetryCount(25).                                                       //nolint:gomnd // .
+		SetRetryCount(10).                                                       //nolint:gomnd // .
 		SetRetryBackoffInterval(10*stdlibtime.Millisecond, 1*stdlibtime.Second). //nolint:gomnd // .
 		SetRetryHook(func(resp *req.Response, err error) {
 			if err != nil {

@@ -245,6 +245,7 @@ func validateVerifySocialKYCStep(req *server.Request[kycsocial.VerificationMetad
 //	@Param			X-Account-Metadata	header		string	false	"Insert your metadata token"	default(<Add metadata token here>)
 //	@Param			userId				path		string	true	"ID of the user"
 //	@Param			skipKYCSteps		query		[]int	false	"the kyc steps you wish to skip"	collectionFormat(multi)
+//	@Param			nextKYCStep			query		int		false	"the kyc step which would be next"
 //	@Success		200					{object}	User
 //	@Failure		400					{object}	server.ErrorResponse	"if validations fail"
 //	@Failure		401					{object}	server.ErrorResponse	"if not authorized"

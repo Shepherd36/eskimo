@@ -24,7 +24,7 @@ func New(ctx context.Context, usersRep UserRepository) Client {
 		cfg.UnexpectedErrorsAllowed = 5
 	}
 	db := storage.MustConnect(ctx, ddl, applicationYamlKey)
-	cl := &client{client: threedivi.New3Divi(usersRep, &cfg.ThreeDiVi), cfg: cfg, db: db}
+	cl := &client{client: threedivi.New3Divi(ctx, usersRep, &cfg.ThreeDiVi), cfg: cfg, db: db}
 	go cl.clearErrs(ctx)
 
 	return cl
@@ -56,19 +56,16 @@ func (c *client) CheckStatus(ctx context.Context, user *users.User, nextKYCStep 
 			}
 		}
 	}
-	//nolint:nestif // .
 	if !hasResult || nextKYCStep == users.LivenessDetectionKYCStep {
-		availabilityErr := c.client.Available(ctx)
+		availabilityErr := c.client.Available(ctx, userWasPreviouslyForwardedToFaceKYC)
 		if availabilityErr == nil {
 			kycFaceAvailable = true
 			if fErr := c.saveUserForwarded(ctx, user.ID); fErr != nil {
 				return false, errors.Wrapf(fErr, "failed ")
 			}
-		} else {
-			if !errors.Is(availabilityErr, internal.ErrNotAvailable) {
-				c.unexpectedErrors.Add(1)
-			}
-			log.Error(errors.Wrapf(err, "[unexpected]face auth is unavailable for userID %v KYCStep %v", user.ID, nextKYCStep))
+		} else if !errors.Is(availabilityErr, internal.ErrNotAvailable) {
+			c.unexpectedErrors.Add(1)
+			log.Error(errors.Wrapf(availabilityErr, "[unexpected]face auth is unavailable for userID %v KYCStep %v", user.ID, nextKYCStep))
 		}
 	}
 

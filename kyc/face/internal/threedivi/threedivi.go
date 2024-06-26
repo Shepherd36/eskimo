@@ -28,7 +28,7 @@ func init() { //nolint:gochecknoinits // It's the only way to tweak the client.
 	req.DefaultClient().GetClient().Timeout = requestDeadline
 }
 
-func New3Divi(usersRepository internal.UserRepository, cfg *Config) internal.Client {
+func New3Divi(ctx context.Context, usersRepository internal.UserRepository, cfg *Config) internal.Client {
 	if cfg.ThreeDiVi.BAFHost == "" {
 		log.Panic(errors.Errorf("no baf-host for 3divi integration"))
 	}
@@ -40,13 +40,16 @@ func New3Divi(usersRepository internal.UserRepository, cfg *Config) internal.Cli
 	}
 	cfg.ThreeDiVi.BAFHost, _ = strings.CutSuffix(cfg.ThreeDiVi.BAFHost, "/")
 
-	return &threeDivi{
+	tdv := &threeDivi{
 		users: usersRepository,
 		cfg:   cfg,
 	}
+	go tdv.clearUsers(ctx)
+
+	return tdv
 }
 
-func (t *threeDivi) Available(ctx context.Context) error {
+func (t *threeDivi) Available(ctx context.Context, userWasPreviouslyForwardedToFaceKYC bool) error {
 	if t.cfg.ThreeDiVi.AvailabilityURL == "" {
 		return nil
 	}
@@ -74,20 +77,39 @@ func (t *threeDivi) Available(ctx context.Context) error {
 	} else if data, err2 := resp.ToBytes(); err2 != nil {
 		return errors.Wrapf(err2, "failed to read body of availability of face auth")
 	} else { //nolint:revive // .
-		return t.isAvailable(data)
+		return t.isAvailable(data, userWasPreviouslyForwardedToFaceKYC)
 	}
 }
 
-func (t *threeDivi) isAvailable(data []byte) error {
+//nolint:revive // .
+func (t *threeDivi) isAvailable(data []byte, userWasPreviouslyForwardedToFaceKYC bool) error {
 	activeUsers, cErr := t.activeUsers(data)
 	if cErr != nil {
 		return errors.Wrapf(cErr, "failed to parse metrics of availability of face auth")
 	}
-	if activeUsers+1 > t.cfg.ThreeDiVi.ConcurrentUsers {
-		return internal.ErrNotAvailable
+	if int64(t.cfg.ThreeDiVi.ConcurrentUsers)-(int64(activeUsers)+int64(t.loadBalancedUsersCount.Load())) >= 1 {
+		if !userWasPreviouslyForwardedToFaceKYC {
+			t.loadBalancedUsersCount.Add(1)
+		}
+
+		return nil
 	}
 
-	return nil
+	return internal.ErrNotAvailable
+}
+
+func (t *threeDivi) clearUsers(ctx context.Context) {
+	ticker := stdlibtime.NewTicker(1 * stdlibtime.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			t.loadBalancedUsersCount.Store(0)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (*threeDivi) activeUsers(data []byte) (int, error) {

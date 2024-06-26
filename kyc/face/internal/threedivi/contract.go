@@ -3,6 +3,7 @@
 package threedivi
 
 import (
+	"sync/atomic"
 	stdlibtime "time"
 
 	"github.com/pkg/errors"
@@ -12,8 +13,9 @@ import (
 
 type (
 	threeDivi struct {
-		users internal.UserRepository
-		cfg   *Config
+		users                  internal.UserRepository
+		cfg                    *Config
+		loadBalancedUsersCount atomic.Uint64
 	}
 	Config struct {
 		ThreeDiVi struct {

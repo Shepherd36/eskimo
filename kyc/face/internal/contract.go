@@ -13,7 +13,7 @@ import (
 
 type (
 	Client interface {
-		Available(ctx context.Context) error
+		Available(ctx context.Context, userWasPreviouslyForwardedToFaceKYC bool) error
 		CheckAndUpdateStatus(ctx context.Context, user *users.User) (hasFaceKYCResult bool, err error)
 		Reset(ctx context.Context, user *users.User, fetchState bool) error
 	}

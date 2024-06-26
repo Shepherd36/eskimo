@@ -1321,6 +1321,12 @@ const docTemplate = `{
                         "description": "the kyc steps you wish to skip",
                         "name": "skipKYCSteps",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "the kyc step which would be next",
+                        "name": "nextKYCStep",
+                        "in": "query"
                     }
                 ],
                 "responses": {

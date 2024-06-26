@@ -198,15 +198,20 @@ func (t *threeDivi) Reset(ctx context.Context, user *users.User, fetchState bool
 	}
 }
 
-//nolint:funlen //.
+//nolint:funlen,gocognit,gocyclo,revive,cyclop //.
 func (*threeDivi) parseApplicant(user *users.User, bafApplicant *applicant) *users.User {
 	updUser := new(users.User)
 	updUser.ID = user.ID
+	//nolint:nestif // .
 	if bafApplicant != nil && bafApplicant.LastValidationResponse != nil && bafApplicant.Status == statusPassed {
 		passedTime := time.New(bafApplicant.LastValidationResponse.CreatedAt)
 		if user.KYCStepsCreatedAt != nil && len(*user.KYCStepsCreatedAt) >= int(users.LivenessDetectionKYCStep) {
 			updUser.KYCStepsCreatedAt = user.KYCStepsCreatedAt
 			updUser.KYCStepsLastUpdatedAt = user.KYCStepsLastUpdatedAt
+			if user.KYCStepPassed == nil || *user.KYCStepPassed == 0 {
+				stepPassed := users.LivenessDetectionKYCStep
+				updUser.KYCStepPassed = &stepPassed
+			}
 			(*updUser.KYCStepsCreatedAt)[stepIdx(users.FacialRecognitionKYCStep)] = passedTime
 			(*updUser.KYCStepsCreatedAt)[stepIdx(users.LivenessDetectionKYCStep)] = passedTime
 			(*updUser.KYCStepsLastUpdatedAt)[stepIdx(users.FacialRecognitionKYCStep)] = passedTime

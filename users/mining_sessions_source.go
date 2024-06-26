@@ -8,7 +8,6 @@ import (
 	stdlibtime "time"
 
 	"github.com/goccy/go-json"
-	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
 	messagebroker "github.com/ice-blockchain/wintr/connectors/message_broker"
@@ -29,11 +28,7 @@ func (s *miningSessionSource) Process(ctx context.Context, msg *messagebroker.Me
 		return errors.Wrapf(err, "failed to updateMiningSession for %#v", ses)
 	}
 
-	return errors.Wrapf(multierror.Append(nil,
-		errors.Wrap(s.incrementTotalActiveUsersCount(ctx, ses), "failed to incrementTotalActiveUsersCount"),
-		errors.Wrap(s.updateTotalUsersCount(ctx, &UserSnapshot{User: usr}), "failed to updateTotalUsersCount"),
-		errors.Wrap(s.updateTotalUsersPerCountryCount(ctx, &UserSnapshot{User: usr}), "failed to updateTotalUsersPerCountryCount"),
-	).ErrorOrNil(), "failed to process miningSession after LivenessDetectionKYCStep: %#v, user: %#v", ses, usr)
+	return errors.Wrapf(s.incrementTotalActiveUsersCount(ctx, ses), "failed to incrementTotalActiveUsersCount for: %v", usr.ID)
 }
 
 func (u *User) IsFirstMiningAfterHumanVerification(minMiningSessionDuration stdlibtime.Duration) bool {

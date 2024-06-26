@@ -144,8 +144,9 @@ type (
 	}
 	UserProfile struct {
 		*User
-		T1ReferralCount *uint64 `json:"t1ReferralCount,omitempty" example:"100"`
-		T2ReferralCount *uint64 `json:"t2ReferralCount,omitempty" example:"100"`
+		T1ReferralCount         *uint64 `json:"t1ReferralCount,omitempty" example:"100"`
+		T2ReferralCount         *uint64 `json:"t2ReferralCount,omitempty" example:"100"`
+		VerifiedT1ReferralCount *uint64 `json:"verifiedT1ReferralCount,omitempty" example:"100"`
 	}
 	Referrals struct {
 		Referrals []*MinimalUserProfile `json:"referrals"`

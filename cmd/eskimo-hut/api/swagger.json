@@ -2365,6 +2365,10 @@
                 "verified": {
                     "type": "boolean",
                     "example": true
+                },
+                "verifiedT1ReferralCount": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         },
@@ -2849,6 +2853,10 @@
                 "verified": {
                     "type": "boolean",
                     "example": true
+                },
+                "verifiedT1ReferralCount": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         },

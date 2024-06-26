@@ -168,6 +168,9 @@ definitions:
       verified:
         example: true
         type: boolean
+      verifiedT1ReferralCount:
+        example: 100
+        type: integer
     type: object
   main.ProcessFaceRecognitionResultArg:
     properties:
@@ -503,6 +506,9 @@ definitions:
       verified:
         example: true
         type: boolean
+      verifiedT1ReferralCount:
+        example: 100
+        type: integer
     type: object
   quiz.Progress:
     properties:

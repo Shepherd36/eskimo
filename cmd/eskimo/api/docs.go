@@ -789,6 +789,10 @@ const docTemplate = `{
                 "verified": {
                     "type": "boolean",
                     "example": true
+                },
+                "verifiedT1ReferralCount": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         },
@@ -1147,6 +1151,10 @@ const docTemplate = `{
                 "verified": {
                     "type": "boolean",
                     "example": true
+                },
+                "verifiedT1ReferralCount": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         }

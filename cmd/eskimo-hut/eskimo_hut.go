@@ -67,6 +67,7 @@ func (s *service) Close(ctx context.Context) error {
 		errors.Wrap(s.socialRepository.Close(), "could not close socialRepository"),
 		errors.Wrap(s.authEmailLinkClient.Close(), "could not close authEmailLinkClient"),
 		errors.Wrap(s.usersProcessor.Close(), "could not close usersProcessor"),
+		errors.Wrap(s.faceKycClient.Close(), "could not close faceKycClient"),
 	).ErrorOrNil()
 }
 

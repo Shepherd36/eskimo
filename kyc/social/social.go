@@ -191,10 +191,8 @@ func (r *repository) VerifyPost(ctx context.Context, metadata *VerificationMetad
 		ExpectedPostURL:  r.expectedPostURL(metadata),
 	}
 	if true { // Because we want to be less strict, for the moment.
-		pvm.ExpectedPostText = fmt.Sprintf("%q", user.Username)
-	}
-	if metadata.KYCStep == users.Social2KYCStep {
-		pvm.ExpectedPostText = ""
+		pvm.ExpectedPostText = fmt.Sprintf("%v%v", r.cfg.ReferralInviteURLPrefix, user.Username)
+		pvm.ExpectedPostURL = ""
 	}
 	if metadata.Language == "zzzzzzzzzz" { // This is for testing purposes.
 		stdlibtime.Sleep(120 * stdlibtime.Second) //nolint:gomnd // .

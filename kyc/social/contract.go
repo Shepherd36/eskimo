@@ -133,16 +133,17 @@ type (
 	}
 
 	config struct {
-		alertFrequency       *sync.Map // .map[users.KYCStep]stdlibtime.Duration.
-		kycConfigJSON        *atomic.Pointer[kycConfigJSON]
-		ConfigJSONURL        string              `yaml:"config-json-url" mapstructure:"config-json-url"` //nolint:tagliatelle // .
-		Environment          string              `yaml:"environment" mapstructure:"environment"`
-		AlertSlackWebhook    string              `yaml:"alert-slack-webhook" mapstructure:"alert-slack-webhook"`       //nolint:tagliatelle // .
-		TenantName           string              `yaml:"tenant-name" mapstructure:"tenant-name"`                       //nolint:tagliatelle // .
-		DelayBetweenSessions stdlibtime.Duration `yaml:"delay-between-sessions" mapstructure:"delay-between-sessions"` //nolint:tagliatelle // .
-		SessionWindow        stdlibtime.Duration `yaml:"session-window" mapstructure:"session-window"`                 //nolint:tagliatelle // .
-		MaxSessionsAllowed   int                 `yaml:"max-sessions-allowed" mapstructure:"max-sessions-allowed"`     //nolint:tagliatelle // .
-		MaxAttemptsAllowed   uint8               `yaml:"max-attempts-allowed" mapstructure:"max-attempts-allowed"`     //nolint:tagliatelle // .
-		EnableAlerts         bool                `yaml:"enable-alerts" mapstructure:"enable-alerts"`                   //nolint:tagliatelle // .
+		alertFrequency          *sync.Map // .map[users.KYCStep]stdlibtime.Duration.
+		kycConfigJSON           *atomic.Pointer[kycConfigJSON]
+		ConfigJSONURL           string              `yaml:"config-json-url" mapstructure:"config-json-url"` //nolint:tagliatelle // .
+		Environment             string              `yaml:"environment" mapstructure:"environment"`
+		AlertSlackWebhook       string              `yaml:"alert-slack-webhook" mapstructure:"alert-slack-webhook"`         //nolint:tagliatelle // .
+		TenantName              string              `yaml:"tenant-name" mapstructure:"tenant-name"`                         //nolint:tagliatelle // .
+		ReferralInviteURLPrefix string              `yaml:"referralInviteUrlPrefix" mapstructure:"referralInviteUrlPrefix"` //nolint:tagliatelle // .
+		DelayBetweenSessions    stdlibtime.Duration `yaml:"delay-between-sessions" mapstructure:"delay-between-sessions"`   //nolint:tagliatelle // .
+		SessionWindow           stdlibtime.Duration `yaml:"session-window" mapstructure:"session-window"`                   //nolint:tagliatelle // .
+		MaxSessionsAllowed      int                 `yaml:"max-sessions-allowed" mapstructure:"max-sessions-allowed"`       //nolint:tagliatelle // .
+		MaxAttemptsAllowed      uint8               `yaml:"max-attempts-allowed" mapstructure:"max-attempts-allowed"`       //nolint:tagliatelle // .
+		EnableAlerts            bool                `yaml:"enable-alerts" mapstructure:"enable-alerts"`                     //nolint:tagliatelle // .
 	}
 )

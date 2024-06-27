@@ -1,5 +1,7 @@
-✅ Verifica contul meu pe @sunwaves_token cu porecla: "{{.Username}}".
+✅ Verific contul meu pe @sunwaves_token cu porecla: "{{.Username}}".
 
 👉 Aducem festivalurile la nivelul următor în ecosistemul #ION cu @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
 
 #SUNWAVES $SW $ICE

@@ -17,10 +17,16 @@ import (
 	"github.com/imroc/req/v3"
 	"github.com/pkg/errors"
 
+	"github.com/ice-blockchain/wintr/log"
 	"github.com/ice-blockchain/wintr/time"
 )
 
-func (*twitterVerifierImpl) VerifyText(doc *goquery.Document, expectedText string) (found bool) {
+func (t *twitterVerifierImpl) VerifyText(ctx context.Context, doc *goquery.Document, expectedText string) (found bool) {
+	isURL := strings.HasPrefix(expectedText, "http://") || strings.HasPrefix(expectedText, "https://")
+	if isURL {
+		return t.VerifyPostLink(ctx, doc, expectedText)
+	}
+
 	doc.Find("p").EachWithBreak(func(_ int, s *goquery.Selection) bool {
 		found = found || strings.Contains(s.Text(), strings.TrimSpace(expectedText))
 
@@ -30,15 +36,37 @@ func (*twitterVerifierImpl) VerifyText(doc *goquery.Document, expectedText strin
 	return
 }
 
+func (t *twitterVerifierImpl) VerifyPostLinkOf(ctx context.Context, target, expectedURL string) bool {
+	if strings.EqualFold(target, expectedURL) {
+		return true
+	}
+
+	if strings.HasPrefix(target, "https://t.co") {
+		loc, err := t.Scraper.Fetcher().Head(ctx, target)
+		if err != nil {
+			log.Warn("twitter: failed to fetch location header", "error", err)
+			// Fallthrough.
+		} else if strings.EqualFold(loc, expectedURL) {
+			return true
+		}
+	}
+
+	result, err := t.Scrape(ctx, target)
+	if err != nil {
+		log.Warn("twitter: failed to scrape", "error", err)
+
+		return false
+	}
+
+	return strings.Contains(strings.ToLower(string(result.Content)), strings.ToLower(expectedURL))
+}
+
 func (t *twitterVerifierImpl) VerifyPostLink(ctx context.Context, doc *goquery.Document, expectedPostURL string) (foundPost bool) {
 	doc.Find("a").EachWithBreak(func(_ int, s *goquery.Selection) bool {
 		for _, node := range s.Nodes {
-			for i := range node.Attr {
-				if node.Attr[i].Key == "href" && strings.HasPrefix(node.Attr[i].Val, "https://t.co") {
-					result, err := t.Scrape(ctx, node.Attr[i].Val)
-					foundPost = err == nil && strings.Contains(strings.ToLower(string(result.Content)), strings.ToLower(expectedPostURL))
-
-					break
+			for attrIndex := range node.Attr {
+				if node.Attr[attrIndex].Key == "href" {
+					foundPost = t.VerifyPostLinkOf(ctx, node.Attr[attrIndex].Val, expectedPostURL)
 				}
 			}
 		}
@@ -49,17 +77,17 @@ func (t *twitterVerifierImpl) VerifyPostLink(ctx context.Context, doc *goquery.D
 	return
 }
 
-func (t *twitterVerifierImpl) VerifyContent(ctx context.Context, oe *twitterOE, expectedText, expectedPostURL string) (err error) {
+func (t *twitterVerifierImpl) VerifyContent(ctx context.Context, oe *twitterOE, meta *Metadata) (err error) {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader([]byte(oe.HTML)))
 	if err != nil {
 		return multierror.Append(ErrInvalidPageContent, err)
 	}
 
-	if expectedText != "" && !t.VerifyText(doc, expectedText) {
+	if meta.ExpectedPostText != "" && !t.VerifyText(ctx, doc, meta.ExpectedPostText) {
 		return ErrTextNotFound
 	}
 
-	if expectedPostURL != "" && !t.VerifyPostLink(ctx, doc, expectedPostURL) {
+	if meta.ExpectedPostURL != "" && !t.VerifyPostLink(ctx, doc, meta.ExpectedPostURL) {
 		return ErrPostNotFound
 	}
 
@@ -199,7 +227,7 @@ func (t *twitterVerifierImpl) VerifyPost(ctx context.Context, meta *Metadata) (u
 		return username, err
 	}
 
-	return username, t.VerifyContent(ctx, oe, meta.ExpectedPostText, meta.ExpectedPostURL)
+	return username, t.VerifyContent(ctx, oe, meta)
 }
 
 func (t *twitterVerifierImpl) countries() []string {

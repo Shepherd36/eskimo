@@ -30,6 +30,25 @@ func (c *censorerImpl) Censor(err error) error {
 	return errors.New(msg)
 }
 
+func (d *dataFetcherImpl) Head(ctx context.Context, target string) (location string, err error) {
+	resp, err := req.C().SetRedirectPolicy(req.NoRedirectPolicy()).
+		R().
+		SetContext(ctx).
+		SetRetryBackoffInterval(0, 0).
+		SetRetryCount(0).
+		Head(target)
+	if err != nil {
+		return "", multierror.Append(ErrFetchFailed, d.Censorer.Censor(err))
+	}
+
+	u, err := resp.Location()
+	if err != nil {
+		return "", multierror.Append(ErrFetchReadFailed, d.Censorer.Censor(err))
+	}
+
+	return u.String(), nil
+}
+
 func (d *dataFetcherImpl) Fetch(ctx context.Context, target string, retry req.RetryConditionFunc) (data []byte, code int, err error) {
 	resp, err := req.DefaultClient().
 		R().
@@ -63,8 +82,12 @@ func (d *dataFetcherImpl) Fetch(ctx context.Context, target string, retry req.Re
 	return data, resp.GetStatusCode(), nil
 }
 
+func (s *webScraperImpl) Fetcher() dataFetcher {
+	return s.DataFetcher
+}
+
 func (s *webScraperImpl) Scrape(ctx context.Context, target string, opts webScraperOptions) (*webScraperResult, error) {
-	data, code, err := s.Fetcher.Fetch(ctx, s.BuildQuery(target, opts.ProxyOptions), opts.Retry)
+	data, code, err := s.DataFetcher.Fetch(ctx, s.BuildQuery(target, opts.ProxyOptions), opts.Retry)
 	if err != nil {
 		return nil, err //nolint:wrapcheck // False-Positive.
 	}
@@ -114,6 +137,6 @@ func newMustWebScraper(apiURL, apiKey string) webScraper {
 	return &webScraperImpl{
 		ScrapeAPIURL: apiURL,
 		APIKey:       apiKey,
-		Fetcher:      &dataFetcherImpl{Censorer: censorer},
+		DataFetcher:  &dataFetcherImpl{Censorer: censorer},
 	}
 }

@@ -40,6 +40,14 @@ func (*mockScraper) Fetch(context.Context, string, req.RetryConditionFunc) ([]by
 	return []byte{}, 0, multierror.Append(ErrScrapeFailed, ErrFetchFailed)
 }
 
+func (*mockScraper) Head(context.Context, string) (string, error) {
+	return "", multierror.Append(ErrScrapeFailed, ErrFetchFailed)
+}
+
+func (*mockScraper) Fetcher() dataFetcher {
+	return nil
+}
+
 func TestTwitterVerifyFetch(t *testing.T) {
 	t.Parallel()
 

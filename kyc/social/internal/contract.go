@@ -43,10 +43,12 @@ type (
 
 	webScraper interface {
 		Scrape(ctx context.Context, url string, opts webScraperOptions) (result *webScraperResult, err error)
+		Fetcher() dataFetcher
 	}
 
 	dataFetcher interface {
 		Fetch(ctx context.Context, url string, retry req.RetryConditionFunc) (content []byte, httpCode int, err error)
+		Head(ctx context.Context, url string) (location string, err error)
 	}
 
 	censorer interface {
@@ -54,7 +56,7 @@ type (
 	}
 
 	webScraperImpl struct {
-		Fetcher      dataFetcher
+		DataFetcher  dataFetcher
 		ScrapeAPIURL string
 		APIKey       string
 	}

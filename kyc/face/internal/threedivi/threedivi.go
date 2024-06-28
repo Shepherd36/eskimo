@@ -225,6 +225,10 @@ func (*threeDivi) parseApplicant(user *users.User, bafApplicant *applicant) *use
 	} else if user.KYCStepsCreatedAt != nil && len(*user.KYCStepsCreatedAt) >= int(users.LivenessDetectionKYCStep) {
 		updUser.KYCStepsCreatedAt = user.KYCStepsCreatedAt
 		updUser.KYCStepsLastUpdatedAt = user.KYCStepsLastUpdatedAt
+		if user.KYCStepPassed != nil && (*user.KYCStepPassed == users.LivenessDetectionKYCStep || *user.KYCStepPassed == users.FacialRecognitionKYCStep) {
+			stepPassed := users.NoneKYCStep
+			updUser.KYCStepPassed = &stepPassed
+		}
 		(*updUser.KYCStepsCreatedAt)[stepIdx(users.FacialRecognitionKYCStep)] = nil
 		(*updUser.KYCStepsCreatedAt)[stepIdx(users.LivenessDetectionKYCStep)] = nil
 		(*updUser.KYCStepsLastUpdatedAt)[stepIdx(users.FacialRecognitionKYCStep)] = nil
@@ -269,16 +273,12 @@ func (t *threeDivi) searchIn3DiviForApplicant(ctx context.Context, userID users.
 			}
 		}).
 		SetRetryCondition(func(resp *req.Response, err error) bool {
-			return err != nil || (resp.GetStatusCode() != http.StatusOK)
+			return err != nil || (resp.GetStatusCode() != http.StatusOK && resp.GetStatusCode() != http.StatusNotFound)
 		}).
-		AddQueryParam("caller", "eskimo-hut").
-		AddQueryParam("Page", "1").
-		AddQueryParam("PageSize", "1").
-		AddQueryParam("TextFilter", userID).
 		SetHeader("Authorization", fmt.Sprintf("Bearer %v", t.cfg.ThreeDiVi.BAFToken)).
-		Get(fmt.Sprintf("%v/publicapi/api/v2/private/Applicants", t.cfg.ThreeDiVi.BAFHost)); err != nil {
+		Get(fmt.Sprintf("%v/publicapi/api/v2/private/Applicants/ByReferenceId/%v", t.cfg.ThreeDiVi.BAFHost, userID)); err != nil {
 		return nil, errors.Wrapf(err, "failed to match applicantId for userID:%v", userID)
-	} else if statusCode := resp.GetStatusCode(); statusCode != http.StatusOK {
+	} else if statusCode := resp.GetStatusCode(); statusCode != http.StatusOK && statusCode != http.StatusNotFound {
 		return nil, errors.Errorf("[%v]failed to match applicantIdfor userID:%v", statusCode, userID)
 	} else if data, err2 := resp.ToBytes(); err2 != nil {
 		return nil, errors.Wrapf(err2, "failed to read body of match applicantId request for userID:%v", userID)
@@ -288,14 +288,13 @@ func (t *threeDivi) searchIn3DiviForApplicant(ctx context.Context, userID users.
 }
 
 func (*threeDivi) extractApplicant(data []byte) (*applicant, error) {
-	var bafUsers page[applicant]
-	if jErr := json.Unmarshal(data, &bafUsers); jErr != nil {
+	var bafApplicant applicant
+	if jErr := json.Unmarshal(data, &bafApplicant); jErr != nil {
 		return nil, errors.Wrapf(jErr, "failed to decode %v into applicants page", string(data))
 	}
-	if len(bafUsers.Items) == 0 {
+	if bafApplicant.Code == codeApplicantNotFound {
 		return nil, errFaceAuthNotStarted
 	}
-	bafApplicant := &bafUsers.Items[0]
 	if bafApplicant.LastValidationResponse != nil {
 		timeFormat := "2006-01-02T15:04:05.999999"
 		var err error
@@ -304,5 +303,5 @@ func (*threeDivi) extractApplicant(data []byte) (*applicant, error) {
 		}
 	}
 
-	return bafApplicant, nil
+	return &bafApplicant, nil
 }

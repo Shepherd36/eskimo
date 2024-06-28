@@ -31,6 +31,7 @@ type (
 // Private API.
 type (
 	applicant struct {
+		Code                   string              `json:"code"`
 		LastValidationResponse *validationResponse `json:"lastValidationResponse"`
 		ApplicantID            string              `json:"applicantId"`
 		Status                 int                 `json:"status"`
@@ -43,10 +44,6 @@ type (
 		ValidationResponseID int    `json:"validationResponseId"`
 		ResponseStatus       int    `json:"responseStatus"`
 	}
-	page[T any] struct {
-		Items []T    `json:"items"`
-		Total uint64 `json:"total"`
-	}
 )
 
 const (
@@ -56,6 +53,7 @@ const (
 	metricOpenConnectionsLabelTCP = "default/tcp-gateway/tcp-listener"
 	statusPassed                  = 1
 	statusFailed                  = 2
+	codeApplicantNotFound         = "120024"
 )
 
 var ( //nolint:gofumpt // .

@@ -101,7 +101,7 @@ var (
 	//nolint:gochecknoglobals // Its loaded once at startup.
 	allLanguageTemplateType = [1]languageTemplateType{postContentLanguageTemplateType}
 	//nolint:gochecknoglobals // Its loaded once at startup.
-	allTemplates = make(map[tenantName]map[users.KYCStep]map[Type]map[languageTemplateType]map[languageCode]*languageTemplate, len(AllSupportedKYCSteps))
+	allTemplates = make(map[tenantName]map[users.KYCStep]map[Type]map[languageTemplateType]map[languageCode][]*languageTemplate, len(AllSupportedKYCSteps))
 )
 
 type (

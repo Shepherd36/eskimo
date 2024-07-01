@@ -5,7 +5,9 @@ package social
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"regexp"
 	"strings"
 	"sync"
@@ -42,23 +44,24 @@ func loadTranslations() { //nolint:funlen,gocognit,revive // .
 						content, fErr := translations.ReadFile(fmt.Sprintf("translations/%v/%v/%v/%v/%v", tenantFile.Name(), kycStep, socialType, templateType, file.Name()))
 						log.Panic(fErr) //nolint:revive // Nope.
 						language := strings.Split(file.Name(), ".")[0]
+						language = strings.Split(language, "-")[0]
 						templName := fmt.Sprintf("translations_%v_%v_%v_%v_%v", tenantFile.Name(), kycStep, socialType, templateType, language)
 						tmpl := languageTemplate{Content: fixTemplateParameters(string(content))}
 						tmpl.content = template.Must(template.New(templName).Parse(tmpl.Content))
 
 						if _, found := allTemplates[tenantName(tenantFile.Name())]; !found {
-							allTemplates[tenantName(tenantFile.Name())] = make(map[users.KYCStep]map[social.StrategyType]map[languageTemplateType]map[string]*languageTemplate)
+							allTemplates[tenantName(tenantFile.Name())] = make(map[users.KYCStep]map[social.StrategyType]map[languageTemplateType]map[string][]*languageTemplate)
 						}
 						if _, found := allTemplates[tenantName(tenantFile.Name())][kycStep]; !found {
-							allTemplates[tenantName(tenantFile.Name())][kycStep] = make(map[Type]map[languageTemplateType]map[languageCode]*languageTemplate, len(AllTypes))
+							allTemplates[tenantName(tenantFile.Name())][kycStep] = make(map[social.StrategyType]map[languageTemplateType]map[string][]*languageTemplate, len(AllTypes)) //nolint:lll // .
 						}
 						if _, found := allTemplates[tenantName(tenantFile.Name())][kycStep][socialType]; !found {
-							allTemplates[tenantName(tenantFile.Name())][kycStep][socialType] = make(map[languageTemplateType]map[languageCode]*languageTemplate, len(&allLanguageTemplateType)) //nolint:lll // .
+							allTemplates[tenantName(tenantFile.Name())][kycStep][socialType] = make(map[languageTemplateType]map[string][]*languageTemplate, len(&allLanguageTemplateType)) //nolint:lll // .
 						}
 						if _, found := allTemplates[tenantName(tenantFile.Name())][kycStep][socialType][templateType]; !found {
-							allTemplates[tenantName(tenantFile.Name())][kycStep][socialType][templateType] = make(map[languageCode]*languageTemplate, len(files))
+							allTemplates[tenantName(tenantFile.Name())][kycStep][socialType][templateType] = make(map[string][]*languageTemplate, len(files))
 						}
-						allTemplates[tenantName(tenantFile.Name())][kycStep][socialType][templateType][language] = &tmpl
+						allTemplates[tenantName(tenantFile.Name())][kycStep][socialType][templateType][language] = append(allTemplates[tenantName(tenantFile.Name())][kycStep][socialType][templateType][language], &tmpl) //nolint:lll // .
 					}
 				}
 			}
@@ -390,15 +393,27 @@ func detectReason(err error) string {
 
 func (vm *VerificationMetadata) expectedPostText(user *users.User, tname tenantName) string {
 	var templ *languageTemplate
-	if val, found := allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType][vm.Language]; found {
-		templ = val
+	if _, found := allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType][vm.Language]; found {
+		randVal := getRandomIndex(int64(len(allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType][vm.Language])))
+		templ = allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType][vm.Language][randVal]
 	} else {
-		templ = allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType]["en"]
+		randVal := getRandomIndex(int64(len(allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType]["en"])))
+		templ = allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType]["en"][randVal]
 	}
 	bf := new(bytes.Buffer)
 	log.Panic(errors.Wrapf(templ.content.Execute(bf, user), "failed to execute postContentLanguageTemplateType template for data:%#v", user))
 
 	return bf.String()
+}
+
+func getRandomIndex(maxVal int64) uint64 {
+	if maxVal == 1 {
+		return 0
+	}
+	n, err := rand.Int(rand.Reader, big.NewInt(maxVal))
+	log.Panic(errors.Wrap(err, "crypto random generator failed"))
+
+	return n.Uint64()
 }
 
 func (r *repository) expectedPostURL(metadata *VerificationMetadata) (url string) {

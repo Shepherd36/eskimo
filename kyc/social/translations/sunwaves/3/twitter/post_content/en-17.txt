@@ -1,0 +1,7 @@
+🎵 Join me on @sunwaves_token as "{{.Username}}".
+
+🎉 Innovating festival vibes in the #ION ecosystem with @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

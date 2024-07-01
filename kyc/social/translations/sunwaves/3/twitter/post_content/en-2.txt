@@ -1,0 +1,7 @@
+🔒 My account on @sunwaves_token is now live as "{{.Username}}".
+
+🚀 Bringing next-level festivals to the #ION ecosystem powered by @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

@@ -185,10 +185,6 @@ func (r *repository) VerifyPost(ctx context.Context, metadata *VerificationMetad
 		return nil, ErrNotAvailable
 	}
 	if metadata.Twitter.TweetURL == "" && metadata.Facebook.AccessToken == "" {
-		if true { // Because we want to be less strict, for the moment.
-			return &Verification{ExpectedPostText: fmt.Sprintf("%v%v", r.cfg.ReferralInviteURLPrefix, user.Username)}, nil
-		}
-
 		return &Verification{ExpectedPostText: metadata.expectedPostText(user.User, tenantName(r.cfg.TenantName))}, nil
 	}
 	pvm := &social.Metadata{

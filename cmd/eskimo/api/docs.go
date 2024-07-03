@@ -766,6 +766,10 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 100
                 },
+                "t1ReferralsSharingEnabled": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "t2ReferralCount": {
                     "type": "integer",
                     "example": 100
@@ -1127,6 +1131,10 @@ const docTemplate = `{
                 "t1ReferralCount": {
                     "type": "integer",
                     "example": 100
+                },
+                "t1ReferralsSharingEnabled": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "t2ReferralCount": {
                     "type": "integer",

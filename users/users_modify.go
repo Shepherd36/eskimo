@@ -29,6 +29,11 @@ func (r *repository) ModifyUser(ctx context.Context, usr *User, profilePicture *
 	if oldUsr.ReferredBy != "" && oldUsr.ReferredBy != oldUsr.ID && usr.ReferredBy != "" && usr.ReferredBy != oldUsr.ReferredBy && notRandom {
 		return nil, errors.Errorf("changing the referredBy a second time is not allowed")
 	}
+	if usr.ReferredBy != oldUsr.ReferredBy {
+		if err = r.replaceReferredByWithARandomOneIfT1ReferralsSharingEnabled(ctx, usr); err != nil {
+			return nil, errors.Wrapf(err, "failed to replaceReferredByWithARandomOneIfT1ReferralsSharingEnabled user %+v", usr)
+		}
+	}
 	if false {
 		if oldUsr.MiningBlockchainAccountAddress != "" && oldUsr.MiningBlockchainAccountAddress != oldUsr.ID &&
 			usr.MiningBlockchainAccountAddress != "" && usr.MiningBlockchainAccountAddress != oldUsr.MiningBlockchainAccountAddress {
@@ -121,6 +126,7 @@ func (r *repository) ModifyUser(ctx context.Context, usr *User, profilePicture *
 	}, nil
 }
 
+//nolint:funlen // .
 func (u *User) override(user *User) *User {
 	usr := new(User)
 	*usr = *u
@@ -130,6 +136,7 @@ func (u *User) override(user *User) *User {
 	usr.LastPingCooldownEndedAt = mergeTimeField(u.LastPingCooldownEndedAt, user.LastPingCooldownEndedAt)
 	usr.HiddenProfileElements = mergePointerToArrayField(u.HiddenProfileElements, user.HiddenProfileElements)
 	usr.RandomReferredBy = mergePointerField(u.RandomReferredBy, user.RandomReferredBy)
+	usr.T1ReferralsSharingEnabled = mergePointerField(u.T1ReferralsSharingEnabled, user.T1ReferralsSharingEnabled)
 	usr.KYCStepPassed = mergePointerField(u.KYCStepPassed, user.KYCStepPassed)
 	usr.KYCStepBlocked = mergePointerField(u.KYCStepBlocked, user.KYCStepBlocked)
 	usr.KYCStepsLastUpdatedAt = mergePointerToArrayField(u.KYCStepsLastUpdatedAt, user.KYCStepsLastUpdatedAt)
@@ -193,6 +200,11 @@ func (u *User) genSQLUpdate(ctx context.Context, agendaUserIDs []UserID) (sql st
 	if u.RandomReferredBy != nil {
 		params = append(params, u.RandomReferredBy)
 		sql += fmt.Sprintf(", RANDOM_REFERRED_BY = $%v", nextIndex)
+		nextIndex++
+	}
+	if u.T1ReferralsSharingEnabled != nil {
+		params = append(params, u.T1ReferralsSharingEnabled)
+		sql += fmt.Sprintf(", T1_REFERRALS_SHARING_ENABLED = $%v", nextIndex)
 		nextIndex++
 	}
 	if u.ClientData != nil {

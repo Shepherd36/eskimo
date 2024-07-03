@@ -104,21 +104,22 @@ type (
 		ProfilePictureURL string `json:"profilePictureUrl,omitempty" example:"https://somecdn.com/p1.jpg" db:"profile_picture_name"`
 	}
 	User struct {
-		CreatedAt               *time.Time                  `json:"createdAt,omitempty" example:"2022-01-03T16:20:52.156534Z" db:"created_at"`
-		UpdatedAt               *time.Time                  `json:"updatedAt,omitempty" example:"2022-01-03T16:20:52.156534Z" db:"updated_at"`
-		LastMiningStartedAt     *time.Time                  `json:"lastMiningStartedAt,omitempty" example:"2022-01-03T16:20:52.156534Z" swaggerignore:"true" db:"last_mining_started_at"`                                       //nolint:lll // .
-		LastMiningEndedAt       *time.Time                  `json:"lastMiningEndedAt,omitempty" example:"2022-01-03T16:20:52.156534Z" swaggerignore:"true" db:"last_mining_ended_at"`                                           //nolint:lll // .
-		LastPingCooldownEndedAt *time.Time                  `json:"lastPingCooldownEndedAt,omitempty" example:"2022-01-03T16:20:52.156534Z" swaggerignore:"true" db:"last_ping_cooldown_ended_at"`                              //nolint:lll // .
-		HiddenProfileElements   *Enum[HiddenProfileElement] `json:"hiddenProfileElements,omitempty" swaggertype:"array,string" example:"level" enums:"globalRank,referralCount,level,role,badges" db:"hidden_profile_elements"` //nolint:lll // .
-		RandomReferredBy        *bool                       `json:"randomReferredBy,omitempty" example:"true" swaggerignore:"true" db:"random_referred_by"`
-		Verified                *bool                       `json:"verified,omitempty" example:"true" db:"-"`
-		QuizCompleted           *bool                       `json:"-" db:"quiz_completed"`
-		KYCStepsLastUpdatedAt   *[]*time.Time               `json:"kycStepsLastUpdatedAt,omitempty" swaggertype:"array,string" example:"2022-01-03T16:20:52.156534Z" db:"kyc_steps_last_updated_at"` //nolint:lll // .
-		KYCStepsCreatedAt       *[]*time.Time               `json:"kycStepsCreatedAt,omitempty" swaggertype:"array,string" example:"2022-01-03T16:20:52.156534Z" db:"kyc_steps_created_at"`          //nolint:lll // .
-		KYCStepPassed           *KYCStep                    `json:"kycStepPassed,omitempty" example:"0" db:"kyc_step_passed"`
-		KYCStepBlocked          *KYCStep                    `json:"kycStepBlocked,omitempty" example:"0" db:"kyc_step_blocked"`
-		ClientData              *JSON                       `json:"clientData,omitempty" db:"client_data"`
-		RepeatableKYCSteps      *map[KYCStep]*time.Time     `json:"repeatableKYCSteps,omitempty" db:"-"` //nolint:tagliatelle // Nope.
+		CreatedAt                 *time.Time                  `json:"createdAt,omitempty" example:"2022-01-03T16:20:52.156534Z" db:"created_at"`
+		UpdatedAt                 *time.Time                  `json:"updatedAt,omitempty" example:"2022-01-03T16:20:52.156534Z" db:"updated_at"`
+		LastMiningStartedAt       *time.Time                  `json:"lastMiningStartedAt,omitempty" example:"2022-01-03T16:20:52.156534Z" swaggerignore:"true" db:"last_mining_started_at"`                                       //nolint:lll // .
+		LastMiningEndedAt         *time.Time                  `json:"lastMiningEndedAt,omitempty" example:"2022-01-03T16:20:52.156534Z" swaggerignore:"true" db:"last_mining_ended_at"`                                           //nolint:lll // .
+		LastPingCooldownEndedAt   *time.Time                  `json:"lastPingCooldownEndedAt,omitempty" example:"2022-01-03T16:20:52.156534Z" swaggerignore:"true" db:"last_ping_cooldown_ended_at"`                              //nolint:lll // .
+		HiddenProfileElements     *Enum[HiddenProfileElement] `json:"hiddenProfileElements,omitempty" swaggertype:"array,string" example:"level" enums:"globalRank,referralCount,level,role,badges" db:"hidden_profile_elements"` //nolint:lll // .
+		RandomReferredBy          *bool                       `json:"randomReferredBy,omitempty" example:"true" swaggerignore:"true" db:"random_referred_by"`
+		Verified                  *bool                       `json:"verified" example:"true" db:"verified"`
+		QuizCompleted             *bool                       `json:"-" db:"quiz_completed"`
+		T1ReferralsSharingEnabled *bool                       `json:"t1ReferralsSharingEnabled" example:"true" db:"t1_referrals_sharing_enabled"`
+		KYCStepsLastUpdatedAt     *[]*time.Time               `json:"kycStepsLastUpdatedAt,omitempty" swaggertype:"array,string" example:"2022-01-03T16:20:52.156534Z" db:"kyc_steps_last_updated_at"` //nolint:lll // .
+		KYCStepsCreatedAt         *[]*time.Time               `json:"kycStepsCreatedAt,omitempty" swaggertype:"array,string" example:"2022-01-03T16:20:52.156534Z" db:"kyc_steps_created_at"`          //nolint:lll // .
+		KYCStepPassed             *KYCStep                    `json:"kycStepPassed,omitempty" example:"0" db:"kyc_step_passed"`
+		KYCStepBlocked            *KYCStep                    `json:"kycStepBlocked,omitempty" example:"0" db:"kyc_step_blocked"`
+		ClientData                *JSON                       `json:"clientData,omitempty" db:"client_data"`
+		RepeatableKYCSteps        *map[KYCStep]*time.Time     `json:"repeatableKYCSteps,omitempty" db:"-"` //nolint:tagliatelle // Nope.
 		PrivateUserInformation
 		PublicUserInformation
 		ReferredBy                     UserID   `json:"referredBy,omitempty" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2" db:"referred_by"`
@@ -131,7 +132,9 @@ type (
 		Language                       string   `json:"language,omitempty" example:"en" db:"language"`
 		Lookup                         string   `json:"-" example:"username" db:"lookup"`
 		AgendaContactUserIDs           []string `json:"agendaContactUserIDs,omitempty" swaggerignore:"true" db:"agenda_contact_user_ids"`
+		VerifiedT1ReferralCount        uint64   `json:"verifiedT1ReferralCount,omitempty" example:"100" db:"verified_t1_referrals"`
 		HashCode                       int64    `json:"hashCode,omitempty" example:"43453546464576547" swaggerignore:"true" db:"hash_code"`
+		MiningBoostLevel               uint8    `json:"-" example:"1" swaggerignore:"true" db:"mining_boost_level"`
 	}
 	MinimalUserProfile struct {
 		Verified *bool       `json:"verified,omitempty" example:"true"`
@@ -144,9 +147,8 @@ type (
 	}
 	UserProfile struct {
 		*User
-		T1ReferralCount         *uint64 `json:"t1ReferralCount,omitempty" example:"100"`
-		T2ReferralCount         *uint64 `json:"t2ReferralCount,omitempty" example:"100"`
-		VerifiedT1ReferralCount *uint64 `json:"verifiedT1ReferralCount,omitempty" example:"100"`
+		T1ReferralCount *uint64 `json:"t1ReferralCount,omitempty" example:"100"`
+		T2ReferralCount *uint64 `json:"t2ReferralCount,omitempty" example:"100"`
 	}
 	Referrals struct {
 		Referrals []*MinimalUserProfile `json:"referrals"`
@@ -270,6 +272,7 @@ type (
 		PreviouslyEndedAt          *time.Time          `json:"previouslyEndedAt,omitempty" swaggerignore:"true" example:"2022-01-03T16:20:52.156534Z"`
 		UserID                     string              `json:"userId,omitempty" swaggerignore:"true" example:"did:ethr:0x4B73C58370AEfcEf86A6021afCDe5673511376B2"`
 		Extension                  stdlibtime.Duration `json:"extension,omitempty" swaggerignore:"true" example:"24h"`
+		MiningBoostLevel           uint8               `json:"miningBoostLevel,omitempty" swaggerignore:"true" example:"1"`
 	}
 
 	userSnapshotSource struct {

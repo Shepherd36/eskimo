@@ -312,6 +312,7 @@ func buildUserForModification(req *server.Request[ModifyUserRequestBody, ModifyU
 		log.Info(fmt.Sprintf("user(id:`%v`,email:`%v`) attempted to set username to `%v`",
 			req.AuthenticatedUser.UserID, req.AuthenticatedUser.Email, req.Data.Username))
 	}
+	usr.T1ReferralsSharingEnabled = req.Data.T1ReferralsSharingEnabled
 	usr.TelegramBotID = req.Data.TelegramBotID
 	usr.TelegramUserID = req.Data.TelegramUserID
 	if req.Data.ClearTelegramInfo != nil && *req.Data.ClearTelegramInfo {
@@ -341,6 +342,7 @@ func (a *ModifyUserRequestBody) verifyIfAtLeastOnePropertyProvided() *server.Res
 		a.ClearTelegramInfo == nil &&
 		a.HiddenProfileElements == nil &&
 		a.ClearHiddenProfileElements == nil &&
+		a.T1ReferralsSharingEnabled == nil &&
 		a.ClientData == nil &&
 		a.ProfilePicture == nil &&
 		a.ResetProfilePicture == nil &&

@@ -6,9 +6,13 @@ CREATE TABLE IF NOT EXISTS users  (
                     last_mining_ended_at timestamp,
                     last_ping_cooldown_ended_at timestamp,
                     hash_code bigint not null generated always as identity,
+                    verified_t1_referrals bigint NOT NULL DEFAULT 0,
                     kyc_step_passed smallint NOT NULL DEFAULT 0,
                     kyc_step_blocked smallint NOT NULL DEFAULT 0,
+                    mining_boost_level smallint NOT NULL DEFAULT 0,
                     random_referred_by BOOLEAN NOT NULL DEFAULT FALSE,
+                    verified BOOLEAN NOT NULL DEFAULT FALSE,
+                    t1_referrals_sharing_enabled BOOLEAN,
                     client_data text,
                     hidden_profile_elements text[],
                     phone_number text NOT NULL UNIQUE,
@@ -46,6 +50,63 @@ DO $$ BEGIN
                 ALTER COLUMN kyc_step_passed SET DEFAULT 0;
     end if;
 END $$;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS t1_referrals_sharing_enabled BOOLEAN;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verified BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS mining_boost_level smallint NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verified_t1_referrals bigint NOT NULL DEFAULT 0;
+
+CREATE INDEX IF NOT EXISTS users_shared_referral_lookup_ix ON users (id)
+WHERE mining_boost_level = 0
+  AND verified = TRUE
+  AND verified_t1_referrals < 3;
+
+CREATE OR REPLACE FUNCTION before_update_on_users()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.verified = (  1=1
+                      AND NEW.referred_by != NEW.id
+                      AND NEW.username != NEW.id
+                      AND NEW.kyc_step_passed >= 2 AND NEW.kyc_step_blocked = 0
+                      AND NEW.kyc_steps_last_updated_at IS NOT NULL AND ARRAY_LENGTH(NEW.kyc_steps_last_updated_at, 1) >= 2 AND NEW.kyc_steps_last_updated_at[2] IS NOT NULL AND NEW.kyc_steps_last_updated_at[2] > TO_TIMESTAMP(0)
+                      AND NEW.kyc_steps_created_at IS NOT NULL AND ARRAY_LENGTH(NEW.kyc_steps_created_at, 1) >= 2 AND NEW.kyc_steps_created_at[2] IS NOT NULL AND NEW.kyc_steps_created_at[2] > TO_TIMESTAMP(0)
+                   );
+
+    IF NEW.verified = TRUE AND NEW.verified != OLD.verified AND NEW.referred_by != OLD.referred_by THEN
+        -- FALSE > TRUE + referred_by changed
+        UPDATE users set verified_t1_referrals = verified_t1_referrals + 1 WHERE id = NEW.referred_by AND NEW.referred_by != NEW.id AND referred_by != NEW.id;
+    ELSIF NEW.verified = TRUE AND NEW.verified != OLD.verified AND NEW.referred_by = OLD.referred_by THEN
+        -- FALSE > TRUE
+        UPDATE users set verified_t1_referrals = verified_t1_referrals + 1 WHERE id = NEW.referred_by AND NEW.referred_by != NEW.id AND referred_by != NEW.id;
+    ELSIF NEW.verified = TRUE AND NEW.verified = OLD.verified AND NEW.referred_by != OLD.referred_by THEN
+        -- TRUE > TRUE + referred_by changed
+        UPDATE users set verified_t1_referrals = verified_t1_referrals + 1 WHERE id = NEW.referred_by AND NEW.referred_by != NEW.id AND referred_by != NEW.id;
+        UPDATE users set verified_t1_referrals = GREATEST(verified_t1_referrals - 1, 0) WHERE id = OLD.referred_by AND OLD.referred_by != NEW.id AND referred_by != NEW.id;
+    ELSIF NEW.verified = FALSE AND NEW.verified != OLD.verified AND NEW.referred_by != OLD.referred_by THEN
+        -- TRUE > FALSE + referred_by changed
+        UPDATE users set verified_t1_referrals = GREATEST(verified_t1_referrals - 1, 0) WHERE id = OLD.referred_by AND OLD.referred_by != NEW.id AND referred_by != NEW.id;
+    ELSIF NEW.verified = FALSE AND NEW.verified != OLD.verified AND NEW.referred_by = OLD.referred_by THEN
+        -- TRUE > FALSE
+        UPDATE users set verified_t1_referrals = GREATEST(verified_t1_referrals - 1, 0) WHERE id = NEW.referred_by AND NEW.referred_by != NEW.id AND referred_by != NEW.id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE OR REPLACE TRIGGER before_update_trigger_on_users
+    BEFORE UPDATE
+    ON users
+    FOR EACH ROW
+    WHEN ( OLD.verified IS DISTINCT FROM (  1=1
+                                              AND NEW.referred_by != NEW.id
+                                              AND NEW.username != NEW.id
+                                              AND NEW.kyc_step_passed >= 2 AND NEW.kyc_step_blocked = 0
+                                              AND NEW.kyc_steps_last_updated_at IS NOT NULL AND ARRAY_LENGTH(NEW.kyc_steps_last_updated_at, 1) >= 2 AND NEW.kyc_steps_last_updated_at[2] IS NOT NULL AND NEW.kyc_steps_last_updated_at[2] > TO_TIMESTAMP(0)
+                                              AND NEW.kyc_steps_created_at IS NOT NULL AND ARRAY_LENGTH(NEW.kyc_steps_created_at, 1) >= 2 AND NEW.kyc_steps_created_at[2] IS NOT NULL AND NEW.kyc_steps_created_at[2] > TO_TIMESTAMP(0)
+                                           ))
+EXECUTE FUNCTION before_update_on_users();
+
+
 ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_step_blocked smallint NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_steps_last_updated_at timestamp[];
 ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_steps_created_at timestamp[];

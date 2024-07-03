@@ -150,6 +150,9 @@ definitions:
       t1ReferralCount:
         example: 100
         type: integer
+      t1ReferralsSharingEnabled:
+        example: true
+        type: boolean
       t2ReferralCount:
         example: 100
         type: integer
@@ -384,6 +387,9 @@ definitions:
         additionalProperties:
           type: string
         type: object
+      t1ReferralsSharingEnabled:
+        example: true
+        type: boolean
       telegramBotId:
         example: "5678"
         type: string
@@ -399,6 +405,9 @@ definitions:
       verified:
         example: true
         type: boolean
+      verifiedT1ReferralCount:
+        example: 100
+        type: integer
     type: object
   main.UserProfile:
     properties:
@@ -488,6 +497,9 @@ definitions:
       t1ReferralCount:
         example: 100
         type: integer
+      t1ReferralsSharingEnabled:
+        example: true
+        type: boolean
       t2ReferralCount:
         example: 100
         type: integer
@@ -2025,6 +2037,10 @@ paths:
       - description: Optional. Example:`true`.
         in: formData
         name: resetProfilePicture
+        type: boolean
+      - description: Optional. Example:`true`.
+        in: formData
+        name: t1ReferralsSharingEnabled
         type: boolean
       - in: formData
         name: telegramBotId

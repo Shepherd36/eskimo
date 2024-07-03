@@ -21,6 +21,9 @@ func (r *repository) CreateUser(ctx context.Context, usr *User, clientIP net.IP)
 	if ctx.Err() != nil {
 		return errors.Wrap(ctx.Err(), "create user failed because context failed")
 	}
+	if err := r.replaceReferredByWithARandomOneIfT1ReferralsSharingEnabled(ctx, usr); err != nil {
+		return errors.Wrapf(err, "failed to replaceReferredByWithARandomOneIfT1ReferralsSharingEnabled user %+v", usr)
+	}
 	r.setCreateUserDefaults(ctx, usr, clientIP)
 	sql := `
 	INSERT INTO users 
@@ -116,4 +119,30 @@ func detectAndParseDuplicateDatabaseError(err error) (field string, newErr error
 	}
 
 	return "", err
+}
+
+func (r *repository) replaceReferredByWithARandomOneIfT1ReferralsSharingEnabled(ctx context.Context, usr *User) error {
+	if usr.ReferredBy == "" || usr.ReferredBy == usr.ID {
+		return nil
+	}
+	sql := `SELECT new_random_referral.id AS new_referred_by
+				FROM users input_referral,
+					 (SELECT id
+					  FROM users
+					  WHERE mining_boost_level = 0
+						AND verified = TRUE
+						AND verified_t1_referrals < 3
+						AND id != ANY ($1)
+					  ORDER BY RANDOM()
+					  LIMIT 1) new_random_referral
+				WHERE input_referral.id = $2
+				  AND input_referral.t1_referrals_sharing_enabled = TRUE`
+	res, err := storage.Get[struct{ NewReferredBy string }](ctx, r.db, sql, []string{usr.ReferredBy, usr.ID}, usr.ReferredBy)
+	if err != nil && !errors.Is(err, storage.ErrNotFound) {
+		return errors.Wrapf(err, "failed to get new referred by if the provided one has t1 sharing enabled, id:%v, referredBy:%v", usr.ID, usr.ReferredBy)
+	} else if res != nil {
+		usr.ReferredBy = res.NewReferredBy
+	}
+
+	return nil
 }

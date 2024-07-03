@@ -19,12 +19,10 @@ func (r *repository) getUserByID(ctx context.Context, id UserID) (*UserProfile, 
 	}
 	result, err := storage.Get[UserProfile](ctx, r.db, `
 	SELECT users.*,
-	       qs.user_id IS NOT NULL AND qs.ended_at is not null AND qs.ended_successfully = true AS quiz_completed,
+	       false AS quiz_completed,
 	       COALESCE(refs.t1, 0) 	  as t1_referral_count,
 		   COALESCE(refs.t2, 0)		  as t2_referral_count
 		FROM users
-		LEFT JOIN quiz_sessions qs
-			ON qs.user_id = users.id
 		LEFT JOIN referral_acquisition_history refs
 			ON refs.user_id = users.id
 		WHERE id = $1`, id)
@@ -35,37 +33,23 @@ func (r *repository) getUserByID(ctx context.Context, id UserID) (*UserProfile, 
 	return result, nil
 }
 
-func (r *repository) GetUserByID(ctx context.Context, userID string) (*UserProfile, error) { //nolint:revive,funlen // Its fine.
+func (r *repository) GetUserByID(ctx context.Context, userID string) (*UserProfile, error) { //nolint:revive // Its fine.
 	if ctx.Err() != nil {
 		return nil, errors.Wrap(ctx.Err(), "get user failed because context failed")
 	}
 	if userID != requestingUserID(ctx) {
 		return r.getOtherUserByID(ctx, userID)
 	}
-	sql := fmt.Sprintf(`
+	sql := `
 		SELECT  	
 			u.*,
-			(qs.user_id IS NOT NULL AND qs.ended_at is not null AND qs.ended_successfully = true) AS quiz_completed,
+			false AS quiz_completed,
 			COALESCE(refs.t1, 0) 		  as t1_referral_count,
-			COALESCE(refs.t2, 0)		  as t2_referral_count,
-			COALESCE((SELECT count(*) 
-					FROM users
-					WHERE referred_by = $1 AND 
-						  username != id AND
-						  kyc_step_passed >= %[1]v AND
-						  kyc_steps_last_updated_at IS NOT NULL AND
-						  kyc_steps_created_at IS NOT NULL AND
-						  ARRAY_LENGTH(kyc_steps_last_updated_at, 1) >= %[1]v AND
-					  	  kyc_steps_last_updated_at[%[1]v - 1] IS NOT NULL AND
-					  	  ARRAY_LENGTH(kyc_steps_created_at, 1) >= %[1]v AND
-					  	  kyc_steps_created_at[%[1]v - 1] IS NOT NULL
-				), 0) AS verified_t1_referral_count
+			COALESCE(refs.t2, 0)		  as t2_referral_count
 		FROM users u 
 				LEFT JOIN referral_acquisition_history refs
 						ON refs.user_id = u.id
-				LEFT JOIN quiz_sessions qs
-					ON qs.user_id = u.id
-		WHERE u.id = $1`, LivenessDetectionKYCStep)
+		WHERE u.id = $1`
 	res, err := storage.Get[UserProfile](ctx, r.db, sql, userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to select user by id %v", userID)
@@ -139,10 +123,8 @@ func (r *repository) GetUserByUsername(ctx context.Context, username string) (*U
 	}
 	result, err := storage.Get[User](ctx, r.db, `
 		SELECT users.*, 
-       		   (qs.user_id IS NOT NULL AND qs.ended_at is not null AND qs.ended_successfully = true) AS quiz_completed
+       		   false AS quiz_completed
 		FROM users 
-		LEFT JOIN quiz_sessions qs
-			ON qs.user_id = users.id
 		WHERE username = $1`, username)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get user by username %v", username)
@@ -157,10 +139,8 @@ func (r *repository) GetUserByUsername(ctx context.Context, username string) (*U
 }
 
 func (r *repository) GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (*User, error) {
-	sql := `SELECT users.*, (qs.user_id IS NOT NULL AND qs.ended_at is not null AND qs.ended_successfully = true) AS quiz_completed
+	sql := `SELECT users.*, false AS quiz_completed
 			FROM users 
-			LEFT JOIN quiz_sessions qs
-					ON qs.user_id = users.id
 			WHERE phone_number = $1 AND phone_number != id`
 	usr, err := storage.Get[User](ctx, r.db, sql, phoneNumber)
 	if err != nil {
@@ -200,14 +180,7 @@ func (r *repository) GetUsers(ctx context.Context, keyword string, limit, offset
 	}
 	sql := fmt.Sprintf(`
 			SELECT 
-			    (u.kyc_step_passed >= %[2]v AND
-					kyc_step_passed >= %[2]v AND
-					kyc_steps_last_updated_at IS NOT NULL AND
-					kyc_steps_created_at IS NOT NULL AND
-					ARRAY_LENGTH(kyc_steps_last_updated_at, 1) >= %[2]v AND
-					kyc_steps_last_updated_at[%[2]v - 1] IS NOT NULL AND
-					ARRAY_LENGTH(kyc_steps_created_at, 1) >= %[2]v AND
-					kyc_steps_created_at[%[2]v - 1] IS NOT NULL) 				  AS verified,
+			    u.verified 				  										  AS verified,
 			    u.last_mining_ended_at 									 	 	  AS active,
 			    u.last_ping_cooldown_ended_at 							 	 	  AS pinged,
 			    u.phone_number_ 										  		  AS phone_number,
@@ -266,7 +239,7 @@ func (r *repository) GetUsers(ctx context.Context, keyword string, limit, offset
 				    user_requesting_this.referred_by                                                    AS user_requesting_this_referred_by,
 				    t0.referred_by                                                                      AS t0_referred_by,
 				    t0.id                                                                               AS t0_id,
-			        qs.user_id IS NOT NULL AND qs.ended_at is not null AND qs.ended_successfully = true AS quiz_completed
+			        false																				AS quiz_completed
 			FROM users u
 					 JOIN USERS t0
 						  ON t0.id = u.referred_by
@@ -276,8 +249,6 @@ func (r *repository) GetUsers(ctx context.Context, keyword string, limit, offset
 						  ON user_requesting_this.id = $5
 						 AND user_requesting_this.username != user_requesting_this.id
 						 AND user_requesting_this.referred_by != user_requesting_this.id
-				     LEFT JOIN quiz_sessions qs
-					   ON qs.user_id = u.id
 			WHERE 
 					u.lookup @@ $2::tsquery
 				  ) u 
@@ -288,7 +259,7 @@ func (r *repository) GetUsers(ctx context.Context, keyword string, limit, offset
 							u.t0_id = u.user_requesting_this_id DESC,
 							u.t0_referred_by = u.user_requesting_this_id DESC,
 							u.username DESC
-			LIMIT $3 OFFSET $4`, r.pictureClient.SQLAliasDownloadURL(`u.profile_picture_name`), LivenessDetectionKYCStep)
+			LIMIT $3 OFFSET $4`, r.pictureClient.SQLAliasDownloadURL(`u.profile_picture_name`))
 	params := []any{
 		time.Now().Time,
 		strings.ReplaceAll(strings.ReplaceAll(strings.ToLower(keyword), "_", "\\_"), "%", "\\%"),

@@ -66,6 +66,8 @@ type (
 		clientData *users.JSON //nolint:revive // It's meant for internal use only.
 		// Optional. Example:`true`.
 		ResetProfilePicture *bool `form:"resetProfilePicture" formMultipart:"resetProfilePicture"`
+		// Optional. Example:`true`.
+		T1ReferralsSharingEnabled *bool `form:"t1ReferralsSharingEnabled" formMultipart:"t1ReferralsSharingEnabled"`
 		// Optional.
 		ProfilePicture *multipart.FileHeader `form:"profilePicture" formMultipart:"profilePicture" swaggerignore:"true"`
 		// Optional. Example:`US`.

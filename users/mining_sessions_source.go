@@ -74,7 +74,8 @@ func (s *miningSessionSource) updateMiningSession(ctx context.Context, ses *mini
 		UPDATE users
 		SET updated_at = $1,
 			last_mining_started_at = $2,
-			last_mining_ended_at = $3
+			last_mining_ended_at = $3,
+			mining_boost_level = $5
 		WHERE id = $4
 		  AND (last_mining_started_at IS NULL OR (extract(epoch from last_mining_started_at)::bigint/%[1]v) != (extract(epoch from $2::timestamp)::bigint/%[1]v))
 		  AND (last_mining_ended_at IS NULL OR (extract(epoch from last_mining_ended_at)::bigint/%[1]v) != (extract(epoch from $3::timestamp)::bigint/%[1]v))
@@ -85,6 +86,7 @@ func (s *miningSessionSource) updateMiningSession(ctx context.Context, ses *mini
 		ses.LastNaturalMiningStartedAt.Time,
 		ses.EndedAt.Time,
 		ses.UserID,
+		ses.MiningBoostLevel,
 	)
 	if err != nil && storage.IsErr(err, storage.ErrNotFound) {
 		err = ErrDuplicate

@@ -1852,6 +1852,12 @@ const docTemplate = `{
                         "in": "formData"
                     },
                     {
+                        "type": "boolean",
+                        "description": "Optional. Example:` + "`" + `true` + "`" + `.",
+                        "name": "t1ReferralsSharingEnabled",
+                        "in": "formData"
+                    },
+                    {
                         "type": "string",
                         "name": "telegramBotId",
                         "in": "formData"
@@ -2349,6 +2355,10 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 100
                 },
+                "t1ReferralsSharingEnabled": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "t2ReferralCount": {
                     "type": "integer",
                     "example": 100
@@ -2689,6 +2699,10 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "t1ReferralsSharingEnabled": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "telegramBotId": {
                     "type": "string",
                     "example": "5678"
@@ -2708,6 +2722,10 @@ const docTemplate = `{
                 "verified": {
                     "type": "boolean",
                     "example": true
+                },
+                "verifiedT1ReferralCount": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         },
@@ -2836,6 +2854,10 @@ const docTemplate = `{
                 "t1ReferralCount": {
                     "type": "integer",
                     "example": 100
+                },
+                "t1ReferralsSharingEnabled": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "t2ReferralCount": {
                     "type": "integer",

@@ -103,7 +103,8 @@ CREATE OR REPLACE TRIGGER before_update_trigger_on_users
                                               AND NEW.kyc_step_passed >= 2 AND NEW.kyc_step_blocked = 0
                                               AND NEW.kyc_steps_last_updated_at IS NOT NULL AND ARRAY_LENGTH(NEW.kyc_steps_last_updated_at, 1) >= 2 AND NEW.kyc_steps_last_updated_at[2] IS NOT NULL AND NEW.kyc_steps_last_updated_at[2] > TO_TIMESTAMP(0)
                                               AND NEW.kyc_steps_created_at IS NOT NULL AND ARRAY_LENGTH(NEW.kyc_steps_created_at, 1) >= 2 AND NEW.kyc_steps_created_at[2] IS NOT NULL AND NEW.kyc_steps_created_at[2] > TO_TIMESTAMP(0)
-                                           ))
+                                           )
+          OR (OLD.verified IS TRUE AND NEW.referred_by IS DISTINCT FROM OLD.referred_by ))
 EXECUTE FUNCTION before_update_on_users();
 
 

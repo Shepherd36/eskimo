@@ -1,0 +1,7 @@
+✅ Memverifikasi akun saya di @sunwaves_token dengan nama panggilan: "{{.Username}}".
+
+👉 Membawa festival ke tingkat berikutnya di ekosistem #ION dengan @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

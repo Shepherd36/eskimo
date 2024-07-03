@@ -1,0 +1,7 @@
+✅ Verifikasi akun saya ing @sunwaves_token nganggo jeneng pangguna: "{{.Username}}".
+
+👉 Nggawe festival menyang tingkat sabanjure ing ekosistem #ION karo @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

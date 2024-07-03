@@ -1,0 +1,7 @@
+✅ Xác minh tài khoản của tôi trên @sunwaves_token với biệt danh: "{{.Username}}".
+
+👉 Đưa các lễ hội lên cấp độ tiếp theo trên hệ sinh thái #ION với @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

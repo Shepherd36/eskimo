@@ -407,6 +407,9 @@ func (vm *VerificationMetadata) expectedPostText(user *users.User, tname tenantN
 }
 
 func getRandomIndex(maxVal int64) uint64 {
+	if maxVal == 0 {
+		log.Panic(errors.New("no translations"))
+	}
 	if maxVal == 1 {
 		return 0
 	}

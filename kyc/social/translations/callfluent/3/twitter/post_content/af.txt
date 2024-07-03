@@ -1,0 +1,7 @@
+✅ Verifieer my rekening op @sunwaves_token met die bynaam: "{{.Username}}".
+
+👉 Bring feeste na die volgende vlak in die #ION ekosisteem met @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

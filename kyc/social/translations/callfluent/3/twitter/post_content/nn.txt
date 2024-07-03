@@ -1,0 +1,7 @@
+✅ Verifiserer kontoen min på @sunwaves_token med kallenamnet: "{{.Username}}".
+
+👉 Tar festivalar til neste nivå i #ION økosystemet med @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

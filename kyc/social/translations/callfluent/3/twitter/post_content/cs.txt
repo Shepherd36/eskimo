@@ -1,0 +1,7 @@
+✅ Ověřuji svůj účet na @sunwaves_token s přezdívkou: "{{.Username}}".
+
+👉 Posouváme festivaly na další úroveň v ekosystému #ION s @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

@@ -1,0 +1,7 @@
+✅ Verificando minha conta no @sunwaves_token com o apelido: "{{.Username}}".
+
+👉 Levando os festivais para o próximo nível no ecossistema #ION com @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

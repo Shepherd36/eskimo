@@ -1,0 +1,7 @@
+📢 Proud to announce my @sunwaves_token verification as "{{.Username}}".
+
+🌐 Innovating festivals in the #ION ecosystem with @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

@@ -1,0 +1,7 @@
+✅ @sunwaves_tokenでニックネームでアカウントを確認中: "{{.Username}}".
+
+👉 @ice_blockchainと共に#IONエコシステムでフェスティバルを次のレベルへ.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

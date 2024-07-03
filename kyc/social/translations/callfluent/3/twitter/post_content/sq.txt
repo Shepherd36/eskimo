@@ -1,0 +1,7 @@
+✅ Verifikimi i llogarisë sime në @sunwaves_token me pseudonimin: "{{.Username}}".
+
+👉 Duke çuar festivalet në nivelin tjetër në ekosistemin #ION me @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

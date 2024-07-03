@@ -1,0 +1,7 @@
+✅ @sunwaves_token hesabımı təxəllüslə təsdiq edirəm: "{{.Username}}".
+
+👉 @ice_blockchain ilə #ION ekosistemində festivalları növbəti səviyyəyə çatdırır.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

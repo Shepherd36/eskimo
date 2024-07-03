@@ -1,0 +1,7 @@
+✅ Fiókom ellenőrzése a @sunwaves_token-nél a következő becenévvel: "{{.Username}}".
+
+👉 A fesztiválok következő szintre emelése a #ION ökoszisztémában az @ice_blockchain-nel.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

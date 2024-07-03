@@ -1,0 +1,7 @@
+✅ تأیید حساب من در @sunwaves_token با نام مستعار: "{{.Username}}".
+
+👉 رساندن جشنواره‌ها به سطح بعدی در اکوسیستم #ION با @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

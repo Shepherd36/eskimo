@@ -1,0 +1,7 @@
+✅ Επαληθεύω τον λογαριασμό μου στο @sunwaves_token με το ψευδώνυμο: "{{.Username}}".
+
+👉 Φέρνουμε τα φεστιβάλ στο επόμενο επίπεδο στο οικοσύστημα #ION με το @ice_blockchain.
+
+https://sunwavestoken.com/@{{.Username}}
+
+#SUNWAVES $SW $ICE

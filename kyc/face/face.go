@@ -52,7 +52,8 @@ func (c *client) CheckStatus(ctx context.Context, user *users.User, nextKYCStep 
 			return false, nil
 		}
 	}
-	if hasResult || (!user.LastMiningStartedAt.IsNil() && user.LastMiningStartedAt.After(*now.Time)) { // User canceled and started mining when there were no slots.
+	if hasResult || (!user.LastMiningStartedAt.IsNil() && user.LastMiningStartedAt.After(*now.Time)) {
+		// User canceled and started mining when there were no slots.
 		if dErr := c.deleteUserForwarded(ctx, user.ID); dErr != nil {
 			return false, errors.Wrapf(err, "failed to delete user forwarded to face kyc for user id %v", user.ID)
 		}

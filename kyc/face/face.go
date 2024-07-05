@@ -44,7 +44,7 @@ func (c *client) CheckStatus(ctx context.Context, user *users.User, nextKYCStep 
 	}
 	hasResult := false
 	now := time.Now()
-	if userWasPreviouslyForwardedToFaceKYC && user.LastMiningStartedAt.Before(*now.Time) {
+	if userWasPreviouslyForwardedToFaceKYC && (user.LastMiningStartedAt.IsNil() || user.LastMiningStartedAt.Before(*now.Time)) {
 		if hasResult, err = c.client.CheckAndUpdateStatus(ctx, user); err != nil {
 			c.unexpectedErrors.Add(1)
 			log.Error(errors.Wrapf(err, "[unexpected]failed to update face auth status for user ID %s", user.ID))
@@ -52,7 +52,7 @@ func (c *client) CheckStatus(ctx context.Context, user *users.User, nextKYCStep 
 			return false, nil
 		}
 	}
-	if hasResult || user.LastMiningStartedAt.After(*now.Time) { // User canceled and started mining when there were no slots.
+	if hasResult || (!user.LastMiningStartedAt.IsNil() && user.LastMiningStartedAt.After(*now.Time)) { // User canceled and started mining when there were no slots.
 		if dErr := c.deleteUserForwarded(ctx, user.ID); dErr != nil {
 			return false, errors.Wrapf(err, "failed to delete user forwarded to face kyc for user id %v", user.ID)
 		}

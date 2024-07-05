@@ -16,6 +16,7 @@ type (
 		users                  internal.UserRepository
 		cfg                    *Config
 		loadBalancedUsersCount atomic.Uint64
+		activeUsersCount       atomic.Uint64
 	}
 	Config struct {
 		ThreeDiVi struct {

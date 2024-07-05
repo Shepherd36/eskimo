@@ -45,11 +45,31 @@ func New3Divi(ctx context.Context, usersRepository internal.UserRepository, cfg 
 		cfg:   cfg,
 	}
 	go tdv.clearUsers(ctx)
+	reqCtx, reqCancel := context.WithTimeout(ctx, requestDeadline)
+	log.Error(errors.Wrapf(tdv.updateAvailability(reqCtx), "failed to update face availability on startup"))
+	reqCancel()
+	go tdv.startAvailabilitySyncer(ctx)
 
 	return tdv
 }
 
-func (t *threeDivi) Available(ctx context.Context, userWasPreviouslyForwardedToFaceKYC bool) error {
+func (t *threeDivi) startAvailabilitySyncer(ctx context.Context) {
+	ticker := stdlibtime.NewTicker(100 * stdlibtime.Millisecond) //nolint:gomnd // .
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			reqCtx, cancel := context.WithTimeout(ctx, requestDeadline)
+			log.Error(errors.Wrap(t.updateAvailability(reqCtx), "failed to updateAvailability"))
+			cancel()
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+//nolint:funlen // .
+func (t *threeDivi) updateAvailability(ctx context.Context) error {
 	if t.cfg.ThreeDiVi.AvailabilityURL == "" {
 		return nil
 	}
@@ -77,17 +97,23 @@ func (t *threeDivi) Available(ctx context.Context, userWasPreviouslyForwardedToF
 	} else if data, err2 := resp.ToBytes(); err2 != nil {
 		return errors.Wrapf(err2, "failed to read body of availability of face auth")
 	} else { //nolint:revive // .
-		return t.isAvailable(data, userWasPreviouslyForwardedToFaceKYC)
+		activeUsers, cErr := t.activeUsers(data)
+		if cErr != nil {
+			return errors.Wrapf(cErr, "failed to parse metrics of availability of face auth")
+		}
+		t.activeUsersCount.Store(uint64(activeUsers))
 	}
+
+	return nil
+}
+
+func (t *threeDivi) Available(_ context.Context, userWasPreviouslyForwardedToFaceKYC bool) error {
+	return t.isAvailable(userWasPreviouslyForwardedToFaceKYC)
 }
 
 //nolint:revive // .
-func (t *threeDivi) isAvailable(data []byte, userWasPreviouslyForwardedToFaceKYC bool) error {
-	activeUsers, cErr := t.activeUsers(data)
-	if cErr != nil {
-		return errors.Wrapf(cErr, "failed to parse metrics of availability of face auth")
-	}
-	if int64(t.cfg.ThreeDiVi.ConcurrentUsers)-(int64(activeUsers)+int64(t.loadBalancedUsersCount.Load())) >= 1 {
+func (t *threeDivi) isAvailable(userWasPreviouslyForwardedToFaceKYC bool) error {
+	if int64(t.cfg.ThreeDiVi.ConcurrentUsers)-(int64(t.activeUsersCount.Load())+int64(t.loadBalancedUsersCount.Load())) >= 1 {
 		if !userWasPreviouslyForwardedToFaceKYC {
 			t.loadBalancedUsersCount.Add(1)
 		}

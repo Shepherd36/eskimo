@@ -44,7 +44,7 @@ func (c *client) handleEmailModification(ctx context.Context, els *emailLinkSign
 	if notifyEmail != "" {
 		now := time.Now()
 		resetConfirmationCode := generateConfirmationCode()
-		uErr := c.upsertEmailLinkSignIn(ctx, oldEmail, els.DeviceUniqueID, resetConfirmationCode, els.Language, now)
+		uErr := c.upsertEmailLinkSignIn(ctx, oldEmail, els.DeviceUniqueID, resetConfirmationCode, now)
 		if uErr != nil {
 			return multierror.Append( //nolint:wrapcheck // .
 				errors.Wrapf(c.resetEmailModification(ctx, usr.ID, oldEmail), "[reset] resetEmailModification failed for email:%v", oldEmail),

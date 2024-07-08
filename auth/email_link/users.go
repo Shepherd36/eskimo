@@ -113,7 +113,7 @@ func (c *client) getUserByIDOrPk(ctx context.Context, userID string, id *loginID
 					phone_number_to_email_migration_user_id,
 					email,
 					$3 												   AS device_unique_id,
-					language,
+					'en' 											   AS language,
 					COALESCE((account_metadata.metadata -> 'hash_code')::BIGINT,0) AS hash_code,
 					account_metadata.metadata,
 					2                                                  AS idx

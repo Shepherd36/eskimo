@@ -61,7 +61,8 @@ func (s *service) SendSignInLinkToEmail( //nolint:gocritic,funlen // .
 		return nil, server.BadRequest(err, invalidEmail)
 	}
 	ctx = emaillink.ContextWithPhoneNumberToEmailMigration(ctx, req.Data.UserID) //nolint:revive // Not a problem.
-	loginSession, err := s.authEmailLinkClient.SendSignInLinkToEmail(ctx, email, req.Data.DeviceUniqueID, req.Data.Language, req.ClientIP.String())
+	posInQueue, rateLimit, loginSession, err := s.authEmailLinkClient.SendSignInLinkToEmail(ctx, email, req.Data.DeviceUniqueID,
+		req.Data.Language, req.ClientIP.String())
 	if err != nil {
 		switch {
 		case errors.Is(err, emaillink.ErrUserBlocked):
@@ -81,7 +82,7 @@ func (s *service) SendSignInLinkToEmail( //nolint:gocritic,funlen // .
 		}
 	}
 
-	return server.OK[Auth](&Auth{LoginSession: loginSession}), nil
+	return server.OK[Auth](&Auth{LoginSession: loginSession, PositionInQueue: posInQueue, RateLimit: rateLimit}), nil
 }
 
 // SignIn godoc

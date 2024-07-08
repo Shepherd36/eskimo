@@ -19,6 +19,7 @@ import (
 	"github.com/ice-blockchain/wintr/auth"
 	appcfg "github.com/ice-blockchain/wintr/config"
 	"github.com/ice-blockchain/wintr/connectors/storage/v2"
+	storagev3 "github.com/ice-blockchain/wintr/connectors/storage/v3"
 	"github.com/ice-blockchain/wintr/email"
 	"github.com/ice-blockchain/wintr/log"
 	"github.com/ice-blockchain/wintr/time"
@@ -29,15 +30,20 @@ func init() {
 	loadEmailMagicLinkTranslationTemplates()
 }
 
-func NewClient(ctx context.Context, userModifier UserModifier, authClient auth.Client) Client {
+//nolint:funlen // .
+func NewClient(ctx context.Context, cancel context.CancelFunc, userModifier UserModifier, authClient auth.Client) Client {
 	cfg := loadConfiguration()
 	cfg.validate()
 	db := storage.MustConnect(ctx, ddl, applicationYamlKey)
-
+	//nolint:contextcheck // Used in queue processing.
+	queueDB := storagev3.MustConnect(context.Background(), applicationYamlKey)
+	log.Panic(errors.Wrapf(queueDB.SetNX(ctx, loginRateLimitKey, initEmailRateLimit, 0).Err(), "failed to init email sending rate limit")) //nolint:revive // .
 	cl := &client{
 		cfg:            cfg,
 		shutdown:       db.Close,
 		db:             db,
+		cancel:         cancel,
+		queueDB:        queueDB,
 		authClient:     authClient,
 		userModifier:   userModifier,
 		emailClients:   make([]email.Client, 0, cfg.ExtraLoadBalancersCount+1),
@@ -52,6 +58,7 @@ func NewClient(ctx context.Context, userModifier UserModifier, authClient auth.C
 			cl.emailClients = append(cl.emailClients, email.New(fmt.Sprintf("%v/%v", applicationYamlKey, i+1)))
 			cl.fromRecipients = append(cl.fromRecipients, fromRecipient{nestedCfg.FromEmailName, nestedCfg.FromEmailAddress})
 		}
+		go cl.processEmailQueue(ctx)
 	}
 	go cl.startOldLoginAttemptsCleaner(ctx)
 
@@ -68,7 +75,31 @@ func NewROClient(ctx context.Context) IceUserIDClient {
 }
 
 func (c *client) Close() error {
+	if c.cancel != nil {
+		c.cancel()
+	}
+	c.queueWg.Wait()
+
 	return errors.Wrap(c.shutdown(), "closing auth/emaillink repository failed")
+}
+
+func (c *client) CheckHealth(ctx context.Context) error {
+	return errors.Wrapf(c.checkQueueDBHealth(ctx), "[health-check] failed to ping queueDB/dfly for email client")
+}
+
+func (c *client) checkQueueDBHealth(ctx context.Context) error {
+	if resp := c.queueDB.Ping(ctx); resp.Err() != nil || resp.Val() != "PONG" {
+		if resp.Err() == nil {
+			resp.SetErr(errors.Errorf("response `%v` is not `PONG`", resp.Val()))
+		}
+
+		return errors.Wrap(resp.Err(), "[health-check] failed to ping DB")
+	}
+	if !c.queueDB.IsRW(ctx) {
+		return errors.New("db is not writeable")
+	}
+
+	return nil
 }
 
 func loadConfiguration() *config {

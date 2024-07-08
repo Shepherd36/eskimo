@@ -17,6 +17,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.55.0
 	github.com/prometheus/prometheus v0.53.0
+	github.com/redis/go-redis/v9 v9.5.3
 	github.com/stretchr/testify v1.9.0
 	github.com/swaggo/swag v1.16.3
 	github.com/testcontainers/testcontainers-go v0.31.0
@@ -55,6 +56,7 @@ require (
 	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v27.0.3+incompatible // indirect
@@ -156,13 +158,13 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
+	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.22.0 // indirect
+	golang.org/x/tools v0.23.0 // indirect
 	google.golang.org/api v0.187.0 // indirect
 	google.golang.org/appengine/v2 v2.0.6 // indirect
 	google.golang.org/genproto v0.0.0-20240701130421-f6361c86f094 // indirect

@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: ice License 1.0
+
+version: '3.7'
+services:
+  eskimo-dfly:
+    container_name: eskimo-dfly
+    image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
+    ulimits:
+      memlock: -1
+    ports:
+      - 6379:6379
+    command: "dragonfly --dbnum=1"

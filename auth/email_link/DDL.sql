@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS email_link_sign_ins (
            previously_issued_token_seq            BIGINT DEFAULT 0 NOT NULL,
            confirmation_code_wrong_attempts_count BIGINT DEFAULT 0 NOT NULL,
            email                                  TEXT NOT NULL,
+           language                               TEXT NOT NULL,
            confirmation_code                      TEXT,
            user_id                                TEXT,
            phone_number_to_email_migration_user_id TEXT,
@@ -34,3 +35,6 @@ CREATE TABLE IF NOT EXISTS sign_ins_per_ip (
        ip                    TEXT NOT NULL,
        PRIMARY KEY (login_session_number, ip)
 );
+
+ALTER TABLE email_link_sign_ins
+    ADD COLUMN IF NOT EXISTS language TEXT NOT NULL DEFAULT 'en';

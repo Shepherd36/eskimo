@@ -52,15 +52,14 @@ func (c *client) CheckStatus(ctx context.Context, user *users.User, nextKYCStep 
 			return false, nil
 		}
 	}
-	if hasResult || (!user.LastMiningStartedAt.IsNil() && user.LastMiningStartedAt.After(*now.Time)) {
-		// User canceled and started mining when there were no slots.
+	if hasResult {
 		if dErr := c.deleteUserForwarded(ctx, user.ID); dErr != nil {
 			return false, errors.Wrapf(err, "failed to delete user forwarded to face kyc for user id %v", user.ID)
 		}
 	}
 	if !hasResult || nextKYCStep == users.LivenessDetectionKYCStep {
 		availabilityErr := c.client.Available(ctx, userWasPreviouslyForwardedToFaceKYC)
-		if availabilityErr == nil {
+		if userWasPreviouslyForwardedToFaceKYC || availabilityErr == nil {
 			kycFaceAvailable = true
 			if fErr := c.saveUserForwarded(ctx, user.ID, now); fErr != nil {
 				return false, errors.Wrapf(fErr, "failed ")

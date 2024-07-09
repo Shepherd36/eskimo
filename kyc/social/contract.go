@@ -120,9 +120,10 @@ type (
 	}
 
 	kycConfigJSON struct {
-		xPostPatternTemplate *template.Template `json:"-"` //nolint:revive // .
-		XPostPattern         string             `json:"xPostPattern"`
-		XPostLink            string             `json:"xPostLink"`
+		xPostPatternTemplate   *template.Template `json:"-"` //nolint:revive // .
+		XPostPattern           string             `json:"xPostPattern"`
+		XPostLink              string             `json:"xPostLink"`
+		XPostPatternExactMatch bool               `json:"xPostPatternExactMatch"`
 	}
 
 	config struct {

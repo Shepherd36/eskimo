@@ -383,6 +383,9 @@ func detectReason(err error) string {
 }
 
 func (r *repository) expectedPostText(user *users.User, vm *VerificationMetadata) string {
+	if r.expectedPostTextIsExactMatch(vm) {
+		return r.expectedPostSubtext(user, vm)
+	}
 	var (
 		templ *languageTemplate
 		tname = tenantName(r.cfg.TenantName)
@@ -411,6 +414,21 @@ func getRandomIndex(maxVal int64) uint64 {
 	log.Panic(errors.Wrap(err, "crypto random generator failed"))
 
 	return n.Uint64()
+}
+
+func (r *repository) expectedPostTextIsExactMatch(metadata *VerificationMetadata) bool {
+	if metadata.Social == TwitterType {
+		switch metadata.KYCStep { //nolint:exhaustive // Not needed. Everything else is validated before this.
+		case users.Social1KYCStep:
+			return r.cfg.kycConfigJSON1.Load().xPostPatternTemplate != nil && r.cfg.kycConfigJSON1.Load().XPostPatternExactMatch
+		case users.Social2KYCStep:
+			return r.cfg.kycConfigJSON2.Load().xPostPatternTemplate != nil && r.cfg.kycConfigJSON2.Load().XPostPatternExactMatch
+		default:
+			panic(fmt.Sprintf("social step `%v` not implemented ", metadata.KYCStep))
+		}
+	}
+
+	return false
 }
 
 func (r *repository) expectedPostSubtext(user *users.User, metadata *VerificationMetadata) string {

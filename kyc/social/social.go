@@ -185,26 +185,13 @@ func (r *repository) VerifyPost(ctx context.Context, metadata *VerificationMetad
 		return nil, ErrNotAvailable
 	}
 	if metadata.Twitter.TweetURL == "" && metadata.Facebook.AccessToken == "" {
-		if true { // Because we want to be less strict, for the moment.
-			return &Verification{ExpectedPostText: fmt.Sprintf("%v%v", r.cfg.ReferralInviteURLPrefix, user.Username)}, nil
-		}
-
-		return &Verification{ExpectedPostText: metadata.expectedPostText(user.User, tenantName(r.cfg.TenantName))}, nil
+		return &Verification{ExpectedPostText: r.expectedPostText(user.User, metadata)}, nil
 	}
 	pvm := &social.Metadata{
 		AccessToken:      metadata.Facebook.AccessToken,
 		PostURL:          metadata.Twitter.TweetURL,
-		ExpectedPostText: metadata.expectedPostText(user.User, tenantName(r.cfg.TenantName)),
+		ExpectedPostText: r.expectedPostSubtext(user.User, metadata),
 		ExpectedPostURL:  r.expectedPostURL(metadata),
-	}
-	if true { // Because we want to be less strict, for the moment.
-		pvm.ExpectedPostText = fmt.Sprintf("%v%v", r.cfg.ReferralInviteURLPrefix, user.Username)
-		pvm.ExpectedPostURL = ""
-	}
-	if metadata.Language == "zzzzzzzzzz" { // This is for testing purposes.
-		stdlibtime.Sleep(120 * stdlibtime.Second) //nolint:gomnd // .
-	} else if metadata.Language == "yyyyyyyyyy" {
-		stdlibtime.Sleep(90 * stdlibtime.Second) //nolint:gomnd // .
 	}
 	userHandle, err := r.socialVerifiers[metadata.Social].VerifyPost(ctx, pvm)
 	if err != nil { //nolint:nestif // .
@@ -395,8 +382,11 @@ func detectReason(err error) string {
 	}
 }
 
-func (vm *VerificationMetadata) expectedPostText(user *users.User, tname tenantName) string {
-	var templ *languageTemplate
+func (r *repository) expectedPostText(user *users.User, vm *VerificationMetadata) string {
+	var (
+		templ *languageTemplate
+		tname = tenantName(r.cfg.TenantName)
+	)
 	if _, found := allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType][vm.Language]; found {
 		randVal := getRandomIndex(int64(len(allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType][vm.Language])))
 		templ = allTemplates[tname][vm.KYCStep][vm.Social][postContentLanguageTemplateType][vm.Language][randVal]
@@ -421,6 +411,34 @@ func getRandomIndex(maxVal int64) uint64 {
 	log.Panic(errors.Wrap(err, "crypto random generator failed"))
 
 	return n.Uint64()
+}
+
+func (r *repository) expectedPostSubtext(user *users.User, metadata *VerificationMetadata) string {
+	if metadata.Social == TwitterType {
+		var tmpl *template.Template
+		switch metadata.KYCStep { //nolint:exhaustive // Not needed. Everything else is validated before this.
+		case users.Social1KYCStep:
+			tmpl = r.cfg.kycConfigJSON.Load().Social1KYC.xPostPatternTemplate
+		case users.Social2KYCStep:
+			tmpl = r.cfg.kycConfigJSON.Load().Social2KYC.xPostPatternTemplate
+		default:
+			for _, val := range r.cfg.kycConfigJSON.Load().DynamicDistributionSocialKYC {
+				if val != nil && val.KYCStep == metadata.KYCStep {
+					tmpl = val.xPostPatternTemplate
+
+					break
+				}
+			}
+		}
+		if tmpl != nil {
+			bf := new(bytes.Buffer)
+			log.Panic(errors.Wrapf(tmpl.Execute(bf, user), "failed to execute expectedPostSubtext template for metadata:%+v user:%+v", metadata, user))
+
+			return bf.String()
+		}
+	}
+
+	return ""
 }
 
 func (r *repository) expectedPostURL(metadata *VerificationMetadata) (url string) {

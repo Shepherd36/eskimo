@@ -4,9 +4,11 @@ package social
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync/atomic"
+	"text/template"
 	stdlibtime "time"
 
 	"github.com/goccy/go-json"
@@ -40,7 +42,7 @@ func (r *repository) startKYCConfigJSONSyncer(ctx context.Context) {
 	}
 }
 
-//nolint:funlen,gomnd // .
+//nolint:funlen,gomnd,nestif // .
 func (r *repository) syncKYCConfigJSON(ctx context.Context) error {
 	if resp, err := req.
 		SetContext(ctx).
@@ -69,11 +71,39 @@ func (r *repository) syncKYCConfigJSON(ctx context.Context) error {
 		if err = json.UnmarshalContext(ctx, data, &kycConfig); err != nil {
 			return errors.Wrapf(err, "failed to unmarshal into %#v, data: %v", kycConfig, string(data))
 		}
-		if body := string(data); !strings.Contains(body, "face-auth") && !strings.Contains(body, "web-face-auth") {
+		if body := string(data); !strings.Contains(body, "social1-kyc") && !strings.Contains(body, "social2-kyc") {
 			return errors.Errorf("there's something wrong with the KYCConfigJSON body: %v", body)
+		}
+		if err = r.initKYCConfig(&kycConfig); err != nil {
+			return errors.Wrapf(err, "failed to init KYCConfigJSON %+v", &kycConfig)
 		}
 		r.cfg.kycConfigJSON.Swap(&kycConfig)
 
 		return nil
 	}
+}
+
+func (*repository) initKYCConfig(kycCfg *kycConfigJSON) (err error) {
+	if pattern := kycCfg.Social1KYC.XPostPattern; pattern != "" {
+		kycCfg.Social1KYC.xPostPatternTemplate, err = template.New("kycCfg.Social1KYC.XPostPattern").Parse(pattern)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse kycCfg.Social1KYC.xPostPatternTemplate `%v`", pattern)
+		}
+	}
+	if pattern := kycCfg.Social2KYC.XPostPattern; pattern != "" {
+		kycCfg.Social2KYC.xPostPatternTemplate, err = template.New("kycCfg.Social2KYC.XPostPattern").Parse(pattern)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse kycCfg.Social2KYC.xPostPatternTemplate `%v`", pattern)
+		}
+	}
+	for ix, dynKYCCfg := range kycCfg.DynamicDistributionSocialKYC {
+		if pattern := dynKYCCfg.XPostPattern; pattern != "" {
+			dynKYCCfg.xPostPatternTemplate, err = template.New(fmt.Sprintf("dynKYCCfg%v.XPostPattern", ix)).Parse(pattern)
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse dynKYCCfg%v.XPostPattern `%v`", ix, pattern)
+			}
+		}
+	}
+
+	return nil
 }

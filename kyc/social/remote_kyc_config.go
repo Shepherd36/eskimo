@@ -75,7 +75,7 @@ func (r *repository) syncKYCConfigJSON1(ctx context.Context) error {
 		if err = json.UnmarshalContext(ctx, data, &kycConfig); err != nil {
 			return errors.Wrapf(err, "failed to unmarshal into %#v, data: %v", kycConfig, string(data))
 		}
-		if body := string(data); !strings.Contains(body, "social1-kyc") {
+		if body := string(data); !strings.Contains(body, "xPostPattern") && !strings.Contains(body, "xPostLink") {
 			return errors.Errorf("there's something wrong with the KYCConfigJSON body: %v", body)
 		}
 		if pattern := kycConfig.XPostPattern; pattern != "" {
@@ -118,7 +118,7 @@ func (r *repository) syncKYCConfigJSON2(ctx context.Context) error {
 		if err = json.UnmarshalContext(ctx, data, &kycConfig); err != nil {
 			return errors.Wrapf(err, "failed to unmarshal into %#v, data: %v", kycConfig, string(data))
 		}
-		if body := string(data); !strings.Contains(body, "social2-kyc") {
+		if body := string(data); !strings.Contains(body, "xPostPattern") && !strings.Contains(body, "xPostLink") {
 			return errors.Errorf("there's something wrong with the KYCConfigJSON body: %v", body)
 		}
 		if pattern := kycConfig.XPostPattern; pattern != "" {

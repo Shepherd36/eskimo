@@ -43,6 +43,12 @@ func (t *twitterVerifierImpl) VerifyPostLinkOf(ctx context.Context, target, expe
 
 	if strings.HasPrefix(target, "https://t.co") {
 		loc, err := t.Scraper.Fetcher().Head(ctx, target)
+		if strings.HasPrefix(loc, "https://twitter.com") {
+			loc = strings.Replace(loc, "https://twitter.com", "", 1)
+		}
+		if strings.HasPrefix(loc, "https://x.com") {
+			loc = strings.Replace(loc, "https://x.com", "", 1)
+		}
 		if err != nil {
 			log.Warn("twitter: failed to fetch location header", "error", err)
 			// Fallthrough.

@@ -418,9 +418,9 @@ func (r *repository) expectedPostSubtext(user *users.User, metadata *Verificatio
 		var tmpl *template.Template
 		switch metadata.KYCStep { //nolint:exhaustive // Not needed. Everything else is validated before this.
 		case users.Social1KYCStep:
-			tmpl = r.cfg.kycConfigJSON1.Load().Social1KYC.xPostPatternTemplate
+			tmpl = r.cfg.kycConfigJSON1.Load().xPostPatternTemplate
 		case users.Social2KYCStep:
-			tmpl = r.cfg.kycConfigJSON2.Load().Social2KYC.xPostPatternTemplate
+			tmpl = r.cfg.kycConfigJSON2.Load().xPostPatternTemplate
 		default:
 			panic(fmt.Sprintf("social step `%v` not implemented ", metadata.KYCStep))
 		}
@@ -439,9 +439,9 @@ func (r *repository) expectedPostURL(metadata *VerificationMetadata) (url string
 	if metadata.Social == TwitterType {
 		switch metadata.KYCStep { //nolint:exhaustive // Not needed. Everything else is validated before this.
 		case users.Social1KYCStep:
-			url = r.cfg.kycConfigJSON1.Load().Social1KYC.XPostLink
+			url = r.cfg.kycConfigJSON1.Load().XPostLink
 		case users.Social2KYCStep:
-			url = r.cfg.kycConfigJSON2.Load().Social2KYC.XPostLink
+			url = r.cfg.kycConfigJSON2.Load().XPostLink
 		default:
 			panic(fmt.Sprintf("social step `%v` not implemented ", metadata.KYCStep))
 		}

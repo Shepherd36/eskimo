@@ -418,17 +418,11 @@ func (r *repository) expectedPostSubtext(user *users.User, metadata *Verificatio
 		var tmpl *template.Template
 		switch metadata.KYCStep { //nolint:exhaustive // Not needed. Everything else is validated before this.
 		case users.Social1KYCStep:
-			tmpl = r.cfg.kycConfigJSON.Load().Social1KYC.xPostPatternTemplate
+			tmpl = r.cfg.kycConfigJSON1.Load().Social1KYC.xPostPatternTemplate
 		case users.Social2KYCStep:
-			tmpl = r.cfg.kycConfigJSON.Load().Social2KYC.xPostPatternTemplate
+			tmpl = r.cfg.kycConfigJSON2.Load().Social2KYC.xPostPatternTemplate
 		default:
-			for _, val := range r.cfg.kycConfigJSON.Load().DynamicDistributionSocialKYC {
-				if val != nil && val.KYCStep == metadata.KYCStep {
-					tmpl = val.xPostPatternTemplate
-
-					break
-				}
-			}
+			panic(fmt.Sprintf("social step `%v` not implemented ", metadata.KYCStep))
 		}
 		if tmpl != nil {
 			bf := new(bytes.Buffer)
@@ -445,17 +439,11 @@ func (r *repository) expectedPostURL(metadata *VerificationMetadata) (url string
 	if metadata.Social == TwitterType {
 		switch metadata.KYCStep { //nolint:exhaustive // Not needed. Everything else is validated before this.
 		case users.Social1KYCStep:
-			url = r.cfg.kycConfigJSON.Load().Social1KYC.XPostLink
+			url = r.cfg.kycConfigJSON1.Load().Social1KYC.XPostLink
 		case users.Social2KYCStep:
-			url = r.cfg.kycConfigJSON.Load().Social2KYC.XPostLink
+			url = r.cfg.kycConfigJSON2.Load().Social2KYC.XPostLink
 		default:
-			for _, val := range r.cfg.kycConfigJSON.Load().DynamicDistributionSocialKYC {
-				if val != nil && val.KYCStep == metadata.KYCStep {
-					url = val.XPostLink
-
-					break
-				}
-			}
+			panic(fmt.Sprintf("social step `%v` not implemented ", metadata.KYCStep))
 		}
 
 		url = strings.Replace(url, `https://x.com`, "", 1)

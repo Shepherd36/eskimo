@@ -119,29 +119,27 @@ type (
 		db              *storage.DB
 	}
 
-	kycConfigJSON struct {
+	kycConfigJSON1 struct {
 		Social1KYC struct {
 			xPostPatternTemplate *template.Template `json:"-"` //nolint:revive // .
 			XPostPattern         string             `json:"xPostPattern"`
 			XPostLink            string             `json:"xPostLink"`
 		} `json:"social1-kyc"` //nolint:tagliatelle // .
+	}
+	kycConfigJSON2 struct {
 		Social2KYC struct {
 			xPostPatternTemplate *template.Template `json:"-"` //nolint:revive // .
 			XPostPattern         string             `json:"xPostPattern"`
 			XPostLink            string             `json:"xPostLink"`
 		} `json:"social2-kyc"` //nolint:tagliatelle // .
-		DynamicDistributionSocialKYC []*struct {
-			xPostPatternTemplate *template.Template `json:"-"` //nolint:revive // .
-			XPostPattern         string             `json:"xPostPattern"`
-			XPostLink            string             `json:"xPostLink"`
-			KYCStep              users.KYCStep      `json:"step"` //nolint:tagliatelle // .
-		} `json:"dynamic-distribution-kyc"` //nolint:tagliatelle // .
 	}
 
 	config struct {
 		alertFrequency       *sync.Map // .map[users.KYCStep]stdlibtime.Duration.
-		kycConfigJSON        *atomic.Pointer[kycConfigJSON]
-		ConfigJSONURL        string              `yaml:"config-json-url" mapstructure:"config-json-url"` //nolint:tagliatelle // .
+		kycConfigJSON1       *atomic.Pointer[kycConfigJSON1]
+		kycConfigJSON2       *atomic.Pointer[kycConfigJSON2]
+		ConfigJSONURL1       string              `yaml:"config-json-url1" mapstructure:"config-json-url1"` //nolint:tagliatelle // .
+		ConfigJSONURL2       string              `yaml:"config-json-url2" mapstructure:"config-json-url2"` //nolint:tagliatelle // .
 		Environment          string              `yaml:"environment" mapstructure:"environment"`
 		AlertSlackWebhook    string              `yaml:"alert-slack-webhook" mapstructure:"alert-slack-webhook"`       //nolint:tagliatelle // .
 		TenantName           string              `yaml:"tenant-name" mapstructure:"tenant-name"`                       //nolint:tagliatelle // .

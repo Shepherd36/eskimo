@@ -4,6 +4,7 @@ package users
 
 import (
 	"context"
+	"fmt"
 	"net"
 
 	"github.com/hashicorp/go-multierror"
@@ -131,17 +132,21 @@ func (r *repository) replaceReferredByWithARandomOneIfT1ReferralsSharingEnabled(
 					  FROM users
 					  WHERE mining_boost_level = 0
 						AND verified = TRUE
-						AND verified_t1_referrals < 3
+						AND verified_t1_referrals = 0
+						AND last_mining_ended_at > now()
 						AND id != ANY ($1)
 					  ORDER BY RANDOM()
 					  LIMIT 1) new_random_referral
 				WHERE input_referral.id = $2
 				  AND input_referral.t1_referrals_sharing_enabled = TRUE`
 	res, err := storage.Get[struct{ NewReferredBy string }](ctx, r.db, sql, []string{usr.ReferredBy, usr.ID}, usr.ReferredBy)
-	if err != nil && !errors.Is(err, storage.ErrNotFound) {
+	if err != nil && !errors.Is(err, storage.ErrNotFound) { //nolint:gocritic // .
 		return errors.Wrapf(err, "failed to get new referred by if the provided one has t1 sharing enabled, id:%v, referredBy:%v", usr.ID, usr.ReferredBy)
 	} else if res != nil {
+		log.Info(fmt.Sprintf("[t1ReferalSharingTriggered][userID:%v] user input referredBy `%v` was switch with system provided referredBy `%v`", usr.ID, usr.ReferredBy, res.NewReferredBy)) //nolint:lll // .
 		usr.ReferredBy = res.NewReferredBy
+	} else {
+		log.Info(fmt.Sprintf("[t1ReferalSharingTriggered][no change][userID:%v] user input referredBy `%v` was not switched with a system provided referredBy because we couldn't find any", usr.ID, usr.ReferredBy)) //nolint:lll // .
 	}
 
 	return nil

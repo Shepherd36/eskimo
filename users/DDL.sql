@@ -55,10 +55,10 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS verified BOOLEAN NOT NULL DEFAULT FAL
 ALTER TABLE users ADD COLUMN IF NOT EXISTS mining_boost_level smallint NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verified_t1_referrals bigint NOT NULL DEFAULT 0;
 
-CREATE INDEX IF NOT EXISTS users_shared_referral_lookup_ix ON users (id)
+CREATE INDEX IF NOT EXISTS users_shared_referral_lookup_v2_ix ON users (last_mining_ended_at DESC NULLS LAST, id)
 WHERE mining_boost_level = 0
   AND verified = TRUE
-  AND verified_t1_referrals < 3;
+  AND verified_t1_referrals = 0;
 
 CREATE OR REPLACE FUNCTION before_update_on_users()
 RETURNS TRIGGER AS $$

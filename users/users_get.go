@@ -239,7 +239,8 @@ func (r *repository) GetUsers(ctx context.Context, keyword string, limit, offset
 				    user_requesting_this.referred_by                                                    AS user_requesting_this_referred_by,
 				    t0.referred_by                                                                      AS t0_referred_by,
 				    t0.id                                                                               AS t0_id,
-			        false																				AS quiz_completed
+			        false																				AS quiz_completed,
+					u.verified																			AS verified
 			FROM users u
 					 JOIN USERS t0
 						  ON t0.id = u.referred_by

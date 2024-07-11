@@ -85,8 +85,6 @@ kyc/quiz:
 auth/email-link:
   extraLoadBalancersCount: 2
   wintr/connectors/storage/v2: *db
-  wintr/connectors/storage/v3:
-    url: redis://default:@localhost:6379/
   fromEmailAddress: no-reply@ice.io
   fromEmailName: ice
   emailValidation:

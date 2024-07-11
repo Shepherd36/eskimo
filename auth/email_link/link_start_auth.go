@@ -22,88 +22,75 @@ import (
 	"github.com/ice-blockchain/wintr/time"
 )
 
-//nolint:funlen,gocognit,revive,gocritic,lll //.
-func (c *client) SendSignInLinkToEmail(ctx context.Context, emailValue, deviceUniqueID, language, clientIP string) (posInQueue int64, rateLimit, loginSession string, err error) {
+//nolint:funlen,gocognit,revive //.
+func (c *client) SendSignInLinkToEmail(ctx context.Context, emailValue, deviceUniqueID, language, clientIP string) (loginSession string, err error) {
 	if ctx.Err() != nil {
-		return 0, "", "", errors.Wrap(ctx.Err(), "send sign in link to email failed because context failed")
+		return "", errors.Wrap(ctx.Err(), "send sign in link to email failed because context failed")
 	}
-	now := time.Now()
 	id := loginID{emailValue, deviceUniqueID}
+	now := time.Now()
 	loginSessionNumber := now.Time.Unix() / int64(sameIPCheckRate.Seconds())
-	oldEmail := users.ConfirmedEmail(ctx)
-	if oldEmail == "" {
-		posInQueue, rateLimit, err = c.enqueueLoginAttempt(ctx, now, emailValue)
-		if err != nil {
-			if errors.Is(err, errAlreadyEnqueued) {
-				loginSession, err = c.getExistingLoginSession(ctx, &id, loginSessionNumber, clientIP)
-
-				return posInQueue, rateLimit, loginSession, errors.Wrapf(err, "failed to fetch existing login session for email %v", id.Email)
-			}
-
-			return 0, "", "", errors.Wrapf(err, "failed to enqueue email %v", emailValue)
-		}
-	}
-
 	if vErr := c.validateEmailSignIn(ctx, &id); vErr != nil {
-		return 0, "", "", errors.Wrapf(vErr, "can't validate email sign in for:%#v", id)
+		return "", errors.Wrapf(vErr, "can't validate email sign in for:%#v", id)
 	}
+	oldEmail := users.ConfirmedEmail(ctx)
 	if oldEmail != "" {
 		loginSessionNumber = 0
 		clientIP = "" //nolint:revive // .
 		oldID := loginID{oldEmail, deviceUniqueID}
 		if vErr := c.validateEmailModification(ctx, emailValue, &oldID); vErr != nil {
-			return 0, "", "", errors.Wrapf(vErr, "can't validate modification email for:%#v", oldID)
+			return "", errors.Wrapf(vErr, "can't validate modification email for:%#v", oldID)
 		}
 	}
 	confirmationCode := generateConfirmationCode()
 	loginSession, err = c.generateLoginSession(&id, clientIP, oldEmail, loginSessionNumber)
 	if err != nil {
-		return 0, "", "", errors.Wrap(err, "can't call generateLoginSession")
+		return "", errors.Wrap(err, "can't call generateLoginSession")
 	}
-	if uErr := c.upsertEmailLinkSignIn(ctx, id.Email, id.DeviceUniqueID, confirmationCode, language, now); uErr != nil {
+	if loginSessionNumber > 0 && clientIP != "" && userIDForPhoneNumberToEmailMigration(ctx) == "" {
+		if ipErr := c.upsertIPLoginAttempt(ctx, &id, clientIP, loginSessionNumber); ipErr != nil {
+			return "", errors.Wrapf(ipErr, "failed increment login attempts for IP:%v (session num %v)", clientIP, loginSessionNumber)
+		}
+	}
+	if uErr := c.upsertEmailLinkSignIn(ctx, id.Email, id.DeviceUniqueID, confirmationCode, now); uErr != nil {
 		if errors.Is(uErr, ErrUserDuplicate) {
-			oldLoginSession, oErr := c.restoreOldLoginSession(&id, clientIP, oldEmail, loginSessionNumber)
+			oldLoginSession, oErr := c.restoreOldLoginSession(ctx, &id, clientIP, oldEmail, loginSessionNumber)
 			if oErr != nil {
-				return 0, "", "", multierror.Append( //nolint:wrapcheck // .
+				return "", multierror.Append( //nolint:wrapcheck // .
 					errors.Wrapf(oErr, "failed to calculate oldLoginSession"),
 					errors.Wrapf(uErr, "failed to store/update email link sign ins for id:%#v", id),
 				).ErrorOrNil()
 			}
 
-			return posInQueue, rateLimit, oldLoginSession, nil
+			return oldLoginSession, nil
 		}
 
-		return 0, "", "", errors.Wrapf(uErr, "failed to store/update email link sign ins for id:%#v", id)
+		return "", multierror.Append( //nolint:wrapcheck // .
+			errors.Wrapf(c.decrementIPLoginAttempts(ctx, clientIP, loginSessionNumber), "[rollback] failed to rollback login attempts for ip"),
+			errors.Wrapf(uErr, "failed to store/update email link sign ins for id:%#v", id),
+		).ErrorOrNil()
 	}
-	if oldEmail != "" {
-		if sendModEmailErr := c.sendEmailWithType(ctx, modifyEmailType, language, []string{id.Email}, []string{confirmationCode}); sendModEmailErr != nil {
-			return 0, "", loginSession, errors.Wrapf(sendModEmailErr, "failed to send validation email for id:%#v", id)
-		}
-	}
-
-	return posInQueue, rateLimit, loginSession, nil
-}
-
-func (c *client) getExistingLoginSession(ctx context.Context, id *loginID, loginSessionNumber int64, clientIP string) (loginSession string, err error) {
-	_, sErr := c.getEmailLinkSignInByPk(ctx, id, "")
-	if sErr != nil {
-		return "", errors.Wrapf(sErr, "failed to get user info by email:%v", id.Email)
-	}
-	loginSession, err = c.generateLoginSession(id, clientIP, "", loginSessionNumber)
-	if err != nil {
-		return "", errors.Wrap(err, "can't call generateLoginSession")
+	if sErr := c.sendConfirmationCode(ctx, &id, oldEmail, confirmationCode, language); sErr != nil {
+		return "", multierror.Append( //nolint:wrapcheck // .
+			errors.Wrapf(c.decrementIPLoginAttempts(ctx, clientIP, loginSessionNumber), "[rollback] failed to rollback login attempts for ip"),
+			errors.Wrapf(sErr, "can't send magic link for id:%#v", id),
+		).ErrorOrNil()
 	}
 
 	return loginSession, nil
 }
 
-func (c *client) restoreOldLoginSession(id *loginID, clientIP, oldEmail string, loginSessionNumber int64) (string, error) {
+func (c *client) restoreOldLoginSession(ctx context.Context, id *loginID, clientIP, oldEmail string, loginSessionNumber int64) (string, error) {
 	oldLoginSession, dErr := c.generateLoginSession(id, clientIP, oldEmail, loginSessionNumber)
 	if dErr != nil {
-		return "", errors.Wrap(dErr, "can't generate loginSession")
+		return "", multierror.Append( //nolint:wrapcheck // .
+			errors.Wrapf(c.decrementIPLoginAttempts(ctx, clientIP, loginSessionNumber), "[rollback] failed to rollback login attempts for ip"),
+			errors.Wrap(dErr, "can't generate loginSession"),
+		).ErrorOrNil()
 	}
 
-	return oldLoginSession, nil
+	return oldLoginSession, errors.Wrapf(c.decrementIPLoginAttempts(ctx, clientIP, loginSessionNumber),
+		"failed to rollback login attempts for ip due to reuse of loginSession")
 }
 
 func (c *client) validateEmailSignIn(ctx context.Context, id *loginID) error {
@@ -120,6 +107,19 @@ func (c *client) validateEmailSignIn(ctx context.Context, id *loginID) error {
 				return terror.New(err, map[string]any{"source": "email"})
 			}
 		}
+	}
+
+	return nil
+}
+
+func (c *client) decrementIPLoginAttempts(ctx context.Context, ip string, loginSessionNumber int64) error {
+	if ip != "" && loginSessionNumber > 0 && userIDForPhoneNumberToEmailMigration(ctx) == "" {
+		sql := `UPDATE sign_ins_per_ip SET
+					login_attempts = GREATEST(sign_ins_per_ip.login_attempts - 1, 0)
+				WHERE ip = $1 AND login_session_number = $2`
+		_, err := storage.Exec(ctx, c.db, sql, ip, loginSessionNumber)
+
+		return errors.Wrapf(err, "failed to decrease login attempts for ip %v lsn %v", ip, loginSessionNumber)
 	}
 
 	return nil
@@ -149,8 +149,19 @@ func (c *client) validateEmailModification(ctx context.Context, newEmail string,
 	return nil
 }
 
+func (c *client) sendConfirmationCode(ctx context.Context, id *loginID, oldEmail, confirmationCode, language string) error {
+	var emailType string
+	if oldEmail != "" {
+		emailType = modifyEmailType
+	} else {
+		emailType = signInEmailType
+	}
+
+	return errors.Wrapf(c.sendEmailWithType(ctx, emailType, id.Email, language, confirmationCode), "failed to send validation email for id:%#v", id)
+}
+
 //nolint:funlen // .
-func (c *client) sendEmailWithType(ctx context.Context, emailType, language string, toEmails, confirmationCodes []string) error {
+func (c *client) sendEmailWithType(ctx context.Context, emailType, toEmail, language, confirmationCode string) error {
 	var tmpl *emailTemplate
 	tmpl, ok := allEmailLinkTemplates[emailType][language]
 	if !ok {
@@ -163,26 +174,17 @@ func (c *client) sendEmailWithType(ctx context.Context, emailType, language stri
 		AppName          string
 		TeamName         string
 	}{
+		Email:            toEmail,
+		ConfirmationCode: confirmationCode,
 		PetName:          c.cfg.PetName,
 		AppName:          c.cfg.AppName,
 		TeamName:         c.cfg.TeamName,
-		Email:            "{{.Email}}",
-		ConfirmationCode: "{{.ConfirmationCode}}",
 	}
 	dataSubject := struct {
 		AppName string
 	}{
 		AppName: c.cfg.AppName,
 	}
-	participants := make([]email.Participant, 0, len(toEmails))
-	for i := range toEmails {
-		participants = append(participants, email.Participant{
-			Name:               "",
-			Email:              toEmails[i],
-			SubstitutionFields: map[string]string{"{{.ConfirmationCode}}": confirmationCodes[i], "{{.Email}}": toEmails[i]},
-		})
-	}
-
 	lbIdx := atomic.AddUint64(&c.emailClientLBIndex, 1) % uint64(c.cfg.ExtraLoadBalancersCount+1)
 
 	return errors.Wrapf(c.emailClients[lbIdx].Send(ctx, &email.Parcel{
@@ -195,26 +197,27 @@ func (c *client) sendEmailWithType(ctx context.Context, emailType, language stri
 			Name:  c.fromRecipients[lbIdx].FromEmailName,
 			Email: c.fromRecipients[lbIdx].FromEmailAddress,
 		},
-	}, participants...), "failed to send email with type:%v for user with emails:%v", emailType, toEmails)
+	}, email.Participant{
+		Name:  "",
+		Email: toEmail,
+	}), "failed to send email with type:%v for user with email:%v", emailType, toEmail)
 }
 
-//nolint:lll,revive // .
-func (c *client) upsertEmailLinkSignIn(ctx context.Context, toEmail, deviceUniqueID, code, language string, now *time.Time) error {
+//nolint:lll // .
+func (c *client) upsertEmailLinkSignIn(ctx context.Context, toEmail, deviceUniqueID, code string, now *time.Time) error {
 	confirmationCodeWrongAttempts := 0
-	params := []any{now.Time, toEmail, deviceUniqueID, code, language, confirmationCodeWrongAttempts, userIDForPhoneNumberToEmailMigration(ctx)}
+	params := []any{now.Time, toEmail, deviceUniqueID, code, confirmationCodeWrongAttempts, userIDForPhoneNumberToEmailMigration(ctx)}
 	sql := fmt.Sprintf(`INSERT INTO email_link_sign_ins (
 							created_at,
 							email,
 							device_unique_id,
 							confirmation_code,
-                            language,
 							confirmation_code_wrong_attempts_count,
 							phone_number_to_email_migration_user_id)
-						VALUES ($1, $2, $3, $4,$5, $6, NULLIF($7,''))
+						VALUES ($1, $2, $3, $4, $5, NULLIF($6,''))
 						ON CONFLICT (email, device_unique_id) DO UPDATE 
 							SET created_at    				     	   = EXCLUDED.created_at,
 								confirmation_code 		          	   = EXCLUDED.confirmation_code,
-								language 		          	           = EXCLUDED.language,
 								confirmation_code_wrong_attempts_count = EXCLUDED.confirmation_code_wrong_attempts_count,
 								phone_number_to_email_migration_user_id = COALESCE(NULLIF(EXCLUDED.phone_number_to_email_migration_user_id,''),email_link_sign_ins.phone_number_to_email_migration_user_id),
 						        email_confirmed_at                     = null,
@@ -229,6 +232,25 @@ func (c *client) upsertEmailLinkSignIn(ctx context.Context, toEmail, deviceUniqu
 	}
 
 	return errors.Wrapf(err, "failed to insert/update email link sign ins record for email:%v", toEmail)
+}
+
+func (c *client) upsertIPLoginAttempt(ctx context.Context, id *loginID, clientIP string, loginSessionNumber int64) error {
+	sql := `INSERT INTO sign_ins_per_ip (ip, login_session_number, login_attempts)
+					VALUES ($1, $2, 1)
+	ON CONFLICT (login_session_number, ip) DO UPDATE
+		SET login_attempts = sign_ins_per_ip.login_attempts + 1`
+	_, err := storage.Exec(ctx, c.db, sql, clientIP, loginSessionNumber)
+	if err != nil {
+		if storage.IsErr(err, storage.ErrCheckFailed) {
+			err = errors.Wrapf(ErrTooManyAttempts, "user %#v is blocked due to a lot of requests from IP %v", id, clientIP)
+
+			return terror.New(err, map[string]any{"ip": clientIP})
+		}
+
+		return errors.Wrapf(err, "failed to increment login attempts from IP %v", clientIP)
+	}
+
+	return nil
 }
 
 func (c *client) generateMagicLinkPayload(id *loginID, oldEmail string, now *time.Time) (string, error) {

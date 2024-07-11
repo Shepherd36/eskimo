@@ -231,7 +231,7 @@ func (s *service) emailUpdateRequested(
 		language = oldUser.Language
 	}
 
-	if _, _, loginSession, err = s.authEmailLinkClient.SendSignInLinkToEmail(
+	if loginSession, err = s.authEmailLinkClient.SendSignInLinkToEmail(
 		users.ConfirmedEmailContext(ctx, loggedInUser.Email),
 		newEmail, deviceID, language, "",
 	); err != nil {

@@ -7,7 +7,6 @@ import (
 	"embed"
 	"io"
 	"mime/multipart"
-	"sync"
 	"text/template"
 	stdlibtime "time"
 
@@ -17,7 +16,6 @@ import (
 	"github.com/ice-blockchain/eskimo/users"
 	"github.com/ice-blockchain/wintr/auth"
 	"github.com/ice-blockchain/wintr/connectors/storage/v2"
-	storagev3 "github.com/ice-blockchain/wintr/connectors/storage/v3"
 	"github.com/ice-blockchain/wintr/email"
 	"github.com/ice-blockchain/wintr/time"
 )
@@ -30,11 +28,10 @@ type (
 	}
 	Client interface {
 		IceUserIDClient
-		SendSignInLinkToEmail(ctx context.Context, emailValue, deviceUniqueID, language, clientIP string) (queuePos int64, rateLimit, loginSession string, err error)
+		SendSignInLinkToEmail(ctx context.Context, emailValue, deviceUniqueID, language, clientIP string) (loginSession string, err error)
 		SignIn(ctx context.Context, loginFlowToken, confirmationCode string) (tokens *Tokens, emailConfirmed bool, err error)
 		RegenerateTokens(ctx context.Context, prevToken string) (tokens *Tokens, err error)
 		UpdateMetadata(ctx context.Context, userID string, metadata *users.JSON) (*users.JSON, error)
-		CheckHealth(ctx context.Context) error
 	}
 	IceUserIDClient interface {
 		io.Closer
@@ -89,24 +86,18 @@ const (
 	sameIPCheckRate = 24 * stdlibtime.Hour
 
 	duplicatedSignInRequestsInLessThan = 2 * stdlibtime.Second
-	loginQueueKey                      = "login_queue"
-	loginRateLimitKey                  = "login_rate_limit"
-	initEmailRateLimit                 = "1000:1m"
 )
 
 type (
 	languageCode = string
 	client       struct {
-		queueDB            storagev3.DB
-		authClient         auth.Client
-		userModifier       UserModifier
 		db                 *storage.DB
 		cfg                *config
 		shutdown           func() error
-		cancel             context.CancelFunc
+		authClient         auth.Client
+		userModifier       UserModifier
 		emailClients       []email.Client
 		fromRecipients     []fromRecipient
-		queueWg            sync.WaitGroup
 		emailClientLBIndex uint64
 	}
 	config struct {
@@ -189,5 +180,4 @@ var (
 		modifyEmailType,
 		notifyEmailChangedType,
 	}
-	errAlreadyEnqueued = errors.New("already enqueued")
 )
